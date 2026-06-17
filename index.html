@@ -19,17 +19,16 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
 }
 
 .login-box {
   background: #1e293b;
   padding: 30px;
   border-radius: 12px;
-  width: 300px;
+  width: 320px;
 }
 
-input, select {
+input {
   width: 100%;
   padding: 10px;
   margin: 10px 0;
@@ -73,9 +72,9 @@ button:hover {
 }
 
 .menu {
-  margin: 10px 0;
-  cursor: pointer;
   padding: 10px;
+  margin: 8px 0;
+  cursor: pointer;
   border-radius: 8px;
 }
 
@@ -99,17 +98,11 @@ button:hover {
   <div class="login-box">
     <h2>INNO Login</h2>
 
-    <input id="email" placeholder="email@firma.sk">
+    <input id="email" placeholder="email">
 
     <input id="password" type="password" placeholder="heslo">
 
-    <select id="role">
-      <option value="user">User</option>
-      <option value="admin">Admin</option>
-      <option value="hr">HR Manager</option>
-    </select>
-
-    <button onclick="login()">Prihlásiť</button>
+    <button onclick="login()">Login</button>
   </div>
 </div>
 
@@ -122,7 +115,7 @@ button:hover {
     <div class="menu" onclick="show('dashboard')">Dashboard</div>
     <div class="menu" onclick="show('docs')">Dokumenty</div>
     <div class="menu" onclick="show('hr')">HR</div>
-    <div class="menu" onclick="show('admin')">Admin</div>
+    <div class="menu" onclick="show('admin')">Administrácia</div>
     <div class="menu" onclick="logout()">Logout</div>
   </div>
 
@@ -130,7 +123,7 @@ button:hover {
 
     <div id="dashboard">
       <h2>Dashboard</h2>
-      <div class="card">Vitaj v systéme</div>
+      <div class="card">Vitaj v INNO intranete</div>
     </div>
 
     <div id="docs" style="display:none;">
@@ -151,14 +144,13 @@ button:hover {
 
     <div id="hr" style="display:none;">
       <h2>HR sekcia</h2>
-      <div class="card">Mzdy: 🔒 iba HR</div>
-      <div class="card">Zmluvy: 🔒 secret dokumenty</div>
+      <div class="card">Mzdy (iba HR)</div>
+      <div class="card">Zmluvy (secret)</div>
     </div>
 
     <div id="admin" style="display:none;">
-      <h2>Admin panel</h2>
-      <div class="card">Správa userov</div>
-      <div class="card">Edit dokumentov</div>
+      <h2>Administrácia</h2>
+      <div id="adminList"></div>
     </div>
 
   </div>
@@ -166,13 +158,28 @@ button:hover {
 
 <script>
 
+/* USERS DB */
+const usersDB = [
+  { email: "lia@inno.sk", name: "Lia78A", role: "admin" },
+  { email: "peter@inno.sk", name: "Peter Novák", role: "user" },
+  { email: "anna@inno.sk", name: "Anna Nová", role: "hr" }
+];
+
 let currentUser = null;
 
+/* LOGIN */
 function login() {
-  const email = document.getElementById("email").value;
-  const role = document.getElementById("role").value;
 
-  currentUser = { email, role };
+  const email = document.getElementById("email").value;
+
+  const user = usersDB.find(u => u.email === email);
+
+  if (!user) {
+    alert("User neexistuje");
+    return;
+  }
+
+  currentUser = user;
 
   localStorage.setItem("user", JSON.stringify(currentUser));
 
@@ -180,9 +187,12 @@ function login() {
   document.getElementById("app").style.display = "block";
 
   applyRole();
+  renderAdmin();
 }
 
+/* ROLE LOGIC */
 function applyRole() {
+
   if (currentUser.role === "user") {
     document.getElementById("admin").style.display = "none";
     document.getElementById("hr").style.display = "none";
@@ -193,29 +203,59 @@ function applyRole() {
   }
 }
 
+/* NAVIGATION */
 function show(id) {
-  document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
+
+  document.querySelectorAll(".content > div")
+    .forEach(d => d.style.display = "none");
+
   document.getElementById(id).style.display = "block";
 }
 
+/* DOC */
 function readDoc(btn) {
   btn.innerText = "✔ Prečítané";
   btn.disabled = true;
 }
 
+/* ADMIN LIST */
+function renderAdmin() {
+
+  const el = document.getElementById("adminList");
+
+  el.innerHTML = "";
+
+  usersDB.forEach(u => {
+
+    el.innerHTML += `
+      <div class="card">
+        <b>${u.name}</b><br>
+        Email: ${u.email}<br>
+        Role: ${u.role}
+      </div>
+    `;
+  });
+}
+
+/* LOGOUT */
 function logout() {
   localStorage.removeItem("user");
   location.reload();
 }
 
+/* AUTO LOGIN */
 window.onload = function() {
+
   const saved = localStorage.getItem("user");
 
   if (saved) {
     currentUser = JSON.parse(saved);
+
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
+
     applyRole();
+    renderAdmin();
   }
 }
 
