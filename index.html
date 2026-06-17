@@ -99,7 +99,6 @@ button:hover {
     <h2>INNO Login</h2>
 
     <input id="email" placeholder="email">
-
     <input id="password" type="password" placeholder="heslo">
 
     <button onclick="login()">Login</button>
@@ -132,19 +131,19 @@ button:hover {
       <div class="card">
         GDPR smernica 2026
         <br><br>
-        <button onclick="readDoc(this)">Potvrdiť prečítanie</button>
+        <button onclick="readDoc(this)">✔ Potvrdiť prečítanie</button>
       </div>
 
       <div class="card">
         BOZP smernica
         <br><br>
-        <button onclick="readDoc(this)">Potvrdiť prečítanie</button>
+        <button onclick="readDoc(this)">✔ Potvrdiť prečítanie</button>
       </div>
     </div>
 
     <div id="hr" style="display:none;">
       <h2>HR sekcia</h2>
-      <div class="card">Mzdy (iba HR)</div>
+      <div class="card">Mzdy (len HR)</div>
       <div class="card">Zmluvy (secret)</div>
     </div>
 
@@ -158,11 +157,26 @@ button:hover {
 
 <script>
 
-/* USERS DB */
+/* DATABASE */
 const usersDB = [
-  { email: "lia@inno.sk", name: "Lia78A", role: "admin" },
-  { email: "peter@inno.sk", name: "Peter Novák", role: "user" },
-  { email: "anna@inno.sk", name: "Anna Nová", role: "hr" }
+  {
+    email: "lia@inno.sk",
+    password: "admin123",
+    name: "Lia78A",
+    role: "admin"
+  },
+  {
+    email: "peter@inno.sk",
+    password: "user123",
+    name: "Peter Novák",
+    role: "user"
+  },
+  {
+    email: "anna@inno.sk",
+    password: "hr123",
+    name: "Anna Nová",
+    role: "hr"
+  }
 ];
 
 let currentUser = null;
@@ -171,11 +185,14 @@ let currentUser = null;
 function login() {
 
   const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  const user = usersDB.find(u => u.email === email);
+  const user = usersDB.find(u =>
+    u.email === email && u.password === password
+  );
 
   if (!user) {
-    alert("User neexistuje");
+    alert("Nesprávny email alebo heslo");
     return;
   }
 
@@ -190,7 +207,7 @@ function login() {
   renderAdmin();
 }
 
-/* ROLE LOGIC */
+/* ROLE CONTROL */
 function applyRole() {
 
   if (currentUser.role === "user") {
@@ -212,13 +229,13 @@ function show(id) {
   document.getElementById(id).style.display = "block";
 }
 
-/* DOC */
+/* DOCUMENT */
 function readDoc(btn) {
   btn.innerText = "✔ Prečítané";
   btn.disabled = true;
 }
 
-/* ADMIN LIST */
+/* ADMIN PANEL */
 function renderAdmin() {
 
   const el = document.getElementById("adminList");
