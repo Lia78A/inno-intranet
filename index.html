@@ -62,6 +62,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -71,6 +72,7 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -88,9 +90,11 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
+            <!-- SEKCIA 1: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -117,6 +121,7 @@
                 </div>
             </div>
 
+            <!-- SEKCIA 2: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -274,7 +279,7 @@ async function loadDocuments() {
             if (targetList) {
                 const hasRead = signedDocs.includes(id);
                 
-                // 🔒 PRÍSTUPOVÉ PRAVIDLO: Každá rola (Admin, HR, User) vidí tlačidlo na overenie prečítania
+                // Každá rola (Admin, HR, User) vidí tlačidlo na overenie prečítania
                 let confirmButtonHtml = hasRead 
                     ? `<span class="confirmed-status">✓ Prečítané & Porozumené</span>`
                     : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
@@ -318,7 +323,7 @@ async function loadDocuments() {
 
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
-    if (currentUser.role !== "admin") return; // Bezpečnostný filter na backende
+    if (currentUser.role !== "admin") return; 
 
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
     let url = urlInput.value.trim();
@@ -358,4 +363,128 @@ async function addDocumentLink(event, catL1, catL2) {
         
         if (!finalName || !finalName.includes(".")) {
             for (let ext of extList) {
-                if (decoded
+                if (decodedUrl.toLowerCase().includes(ext)) {
+                    let endIndex = decodedUrl.toLowerCase().indexOf(ext) + ext.length;
+                    let subStr = decodedUrl.substring(0, endIndex);
+                    let lastSlash = subStr.lastIndexOf("/");
+                    if (lastSlash !== -1) {
+                        let candidate = subStr.substring(lastSlash + 1);
+                        if (candidate && candidate.length > ext.length && !candidate.includes("=:")) {
+                            finalName = candidate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
+    } catch (e) {}
+
+    if (!finalName || !finalName.includes(".") || finalName.length < 4) {
+        let manualName = prompt("Microsoft v tomto type odkazu schoval názov súboru.\n\nZadajte iba čistý názov súboru (napr. Pozv59):");
+        if (manualName && manualName.trim()) {
+            finalName = manualName.trim();
+            if (!finalName.includes(".") && detectedExt) {
+                finalName += detectedExt;
+            } else if (!finalName.includes(".")) {
+                finalName += ".docx"; 
+            }
+        } else {
+            alert("Pridanie zrušené. Súbor musí mať zadaný názov.");
+            return;
+        }
+    }
+
+    try {
+        await db.collection("documents").add({
+            fileName: finalName, 
+            fileUrl: url,
+            categoryL1: catL1.toLowerCase(), 
+            categoryL2: catL2.toLowerCase(),
+            uploadedBy: currentUser.email
+        });
+        urlInput.value = "";
+    } catch (error) {
+        alert("Chyba: " + error.message);
+    }
+}
+
+async function renameDocument(docId, currentName) {
+    if (currentUser.role !== "admin") return;
+    let newName = prompt("Zadajte nový názov pre tento dokument:", currentName);
+    if (newName && newName.trim() && newName.trim() !== currentName) {
+        try {
+            await db.collection("documents").doc(docId).update({ fileName: newName.trim() });
+        } catch (e) { alert("Chyba pri premenovaní: " + e.message); }
+    }
+}
+
+async function confirmRead(docId, docName) {
+    if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli?`)) return;
+    const formattedDate = new Date().toLocaleString("sk-SK");
+    try {
+        await db.collection("logs").add({
+            docId: docId, docName: docName, userEmail: currentUser.email,
+            userName: currentUser.name || currentUser.email, timestamp: formattedDate, type: "Prečítané a Porozumené"
+        });
+        alert("Potvrdené.");
+        loadDocuments();
+    } catch (error) { alert(error.message); }
+}
+
+function loadDocumentHistory(docId) {
+    if (currentUser.role !== "admin") return;
+    db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
+        const historyBox = document.getElementById(`history-box-${docId}`);
+        if (!historyBox) return;
+        if (snapshot.empty) { historyBox.innerHTML = "<i>Zatiaľ neprečítané.</i>"; return; }
+        let html = "<b>Prečítali:</b><br>";
+        snapshot.forEach(log => {
+            const l = log.data();
+            html += `<div class="history-row"><span>👤 <b>${l.userName}</b></span> <span>⏱️ ${l.timestamp}</span></div>`;
+        });
+        historyBox.innerHTML = html;
+    });
+}
+
+async function deleteDocument(docId) {
+    if (currentUser.role !== "admin") return;
+    if (!confirm("Vymazať?")) return;
+    try { await db.collection("documents").doc(docId).delete(); alert("Vymazané."); } catch (e) { alert(e.message); }
+}
+
+function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
+function toggleAccordion(id) {
+    const container = document.getElementById(id);
+    const arrow = document.getElementById("arrow-" + id);
+    const isVisible = container.style.display === "block";
+    container.style.display = isVisible ? "none" : "block";
+    arrow.innerText = isVisible ? "▼" : "▲";
+}
+
+function toggleHistoryVisibility(docId) {
+    const box = document.getElementById(`history-box-${docId}`);
+    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
+}
+
+async function loadAdmin() {
+    if (!currentUser || currentUser.role !== "admin") return;
+    const snap = await db.collection("users").get();
+    let html = "";
+    snap.forEach(doc => { 
+        const u = doc.data();
+        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
+
+async function updateUserRole(docId, newRole) {
+    if (currentUser.role !== "admin") return;
+    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
+}
+
+function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
