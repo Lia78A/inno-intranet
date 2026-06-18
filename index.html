@@ -65,7 +65,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -75,7 +74,6 @@
     </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -93,11 +91,9 @@
             <div class="card" id="welcome"></div> 
         </div>
         
-        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
-            <!-- ÚROVEŇ 1: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -124,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- ÚROVEŇ 1: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -258,7 +253,7 @@ function applyRoleVisibility() {
             zone.innerHTML = `
                 <div class="add-link-box">
                     <input type="text" id="name-${cat.l1}-${cat.l2}" placeholder="Názov dokumentu...">
-                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
+                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)" oninput="autoExtractFileName('${cat.l1}', '${cat.l2}')">
                     <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
                 </div>
             `;
@@ -272,6 +267,51 @@ function applyRoleVisibility() {
     }
     if (currentUser && currentUser.role === "hr") { 
         document.getElementById("menu-admin").style.display = "none"; 
+    }
+}
+
+/* 🧠 AUTOMATICKÁ EXTRAKCIA NÁZVU A PRÍPONY Z ODKAZU */
+function autoExtractFileName(catL1, catL2) {
+    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
+    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
+    
+    if (!urlInput || !nameInput) return;
+    
+    let urlText = urlInput.value.trim();
+    if (!urlText) return;
+
+    try {
+        let decodedName = "";
+
+        // Pokus č. 1: Hľadáme názov v parametri "file=" alebo "id=" (bežné pre OneDrive/SharePoint)
+        const urlObj = new URL(urlText);
+        const params = new URLSearchParams(urlObj.search);
+        
+        if (params.has("file")) {
+            decodedName = params.get("file");
+        } else if (params.has("id")) {
+            const idParam = params.get("id");
+            decodedName = idParam.substring(idParam.lastIndexOf('/') + 1);
+        }
+
+        // Pokus č. 2: Čistý názov z konca URL cesty pred otáznikom
+        if (!decodedName) {
+            const pathname = urlObj.pathname;
+            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
+            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
+                decodedName = decodeURIComponent(lastPart);
+            }
+        }
+
+        // Ak sme úspešne vygenerovali názov, vyčistíme ho a zapíšeme
+        if (decodedName) {
+            if (decodedName.includes("?")) {
+                decodedName = decodedName.split("?")[0];
+            }
+            nameInput.value = decodedName;
+        }
+    } catch (e) {
+        // Ignorujeme, kým odkaz nie je kompletný
     }
 }
 
@@ -404,7 +444,7 @@ function loadDocumentHistory(docId) {
           });
           historyBox.innerHTML = html;
       }, (error) => {
-          console.log("História zablokovaná pravidlami: " + error.message);
+          console.log("História zablokovaná: " + error.message);
       });
 }
 
@@ -448,7 +488,7 @@ async function addDocumentLink(event, catL1, catL2) {
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
-        alert("Dokument bol úspešne pridaný do intranetu!");
+        alert("Dokument bol úspešne pridaný!");
         nameInput.value = "";
         urlInput.value = "";
     } catch (error) {
@@ -466,49 +506,3 @@ async function deleteDocument(docId) {
         alert("Chyba pri mazaní: " + error.message);
     }
 }
-
-/* ADMIN PANEL */
-async function loadAdmin() {
-    if (!currentUser || currentUser.role !== "admin") return;
-    const snap = await db.collection("users").get();
-    let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        const docId = doc.id;
-        html += `
-        <div class="admin-user-card"> 
-            <div><b>${u.name || 'Nepomenovaný užívateľ'}</b><br>${u.email}</div>
-            <div>
-                <label>Rola: </label>
-                <select onchange="updateUserRole('${docId}', this.value)">
-                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
-                    <option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option>
-                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-                </select>
-            </div>
-        </div> 
-        `; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
-
-async function updateUserRole(docId, newRole) {
-    try {
-        await db.collection("users").doc(docId).update({ role: newRole });
-        alert("Rola bola úspešne zmenená!");
-        if (docId === currentUser.docId) {
-            currentUser.role = newRole;
-            applyRoleVisibility();
-            if (newRole !== 'admin') show('dashboard');
-        }
-    } catch (error) {
-        alert("Chyba pri zmene roly: " + error.message);
-    }
-}
-
-function logout() { 
-    auth.signOut().then(() => { currentUser = null; location.reload(); });
-}
-</script>
-</body>
-</html>
