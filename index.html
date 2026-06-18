@@ -26,9 +26,10 @@
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
 
-        /* ŠTÝLY PRE DOKUMENTY A KNIŽNICU */
-        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
-        .doc-category:hover { background: #334155; }
+        /* ŠTÝLY PRE KATEGÓRIE A POLOŽKY */
+        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
+        .doc-category-clickable { cursor: pointer; }
+        .doc-category-clickable:hover { background: #334155; }
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
         .doc-item-list { margin: 5px 0; padding-left: 0; }
@@ -50,9 +51,9 @@
         .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .history-btn:hover { background: #0369a1; }
 
-        /* NOVÉ: Špeciálne štýlové tlačidlo pre externý preklik do firemného Nuclina */
-        .ext-link-btn { background: #0284c7; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75em; font-weight: bold; margin-left: auto; margin-right: 15px; display: inline-block; border: 1px solid #0ea5e9;}
-        .ext-link-btn:hover { background: #0369a1; }
+        /* Elegantný odkaz pre Nuclino "Vstúpiť" */
+        .nuclino-go-link { color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 0.95em; padding: 4px 12px; border-radius: 6px; transition: background 0.2s;}
+        .nuclino-go-link:hover { background: rgba(56, 189, 248, 0.15); text-decoration: underline; }
 
         .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
@@ -89,6 +90,7 @@
         <div class="menu" onclick="show('dashboard')">Dashboard</div> 
         <div class="menu" onclick="show('docs')">Dokumenty</div> 
         <div class="menu" id="menu-library" onclick="show('library')">Knižnica</div> 
+        <div class="sidebar-hr-divider" style="margin: 10px 0; border-top: 1px solid #1f2937;"></div>
         <div class="menu" id="menu-hr" onclick="show('hr')">HR</div> 
         <div class="menu" id="menu-admin" onclick="show('admin')">Admin</div> 
         <div class="menu" onclick="logout()">Logout</div> 
@@ -104,7 +106,7 @@
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
-            <div class="doc-category" onclick="toggleAccordion('cat-iso')">
+            <div class="doc-category doc-category-clickable" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
             <div id="cat-iso" class="doc-subcategory-container">
@@ -114,7 +116,7 @@
                 <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-iso-ine"></div></div>
             </div>
 
-            <div class="doc-category" onclick="toggleAccordion('cat-isms')">
+            <div class="doc-category doc-category-clickable" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
             <div id="cat-isms" class="doc-subcategory-container">
@@ -129,24 +131,15 @@
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
-            <!-- 1. VEREJNÝ PRIEČINOK: NUCLINO (Pridaný priamy firemný odkaz) -->
-            <div class="doc-category" style="cursor: default;" onclick="handleCategoryClick(event, 'cat-lib-nuclino')">
-                🌐 <span>Úroveň 1: Nuclino (Všetci prístup)</span>
-                <!-- 🔥 NOVÉ: Tlačidlo, ktoré smeruje priamo na vaše firemné Nuclino login prostredie -->
-                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="ext-link-btn" onclick="event.stopPropagation();">Otvoriť firemné Nuclino ↗</a>
-                <span id="arrow-cat-lib-nuclino" style="cursor: pointer;">▼</span>
-            </div>
-            <div id="cat-lib-nuclino" class="doc-subcategory-container">
-                <div class="doc-subcategory">
-                    📂 <b>Spoločné dokumenty Nuclino</b>
-                    <div id="list-lib-nuclino" class="doc-item-list"></div>
-                    <div id="zone-lib-nuclino"></div>
-                </div>
+            <!-- 🔥 OPRAVENÉ: Čistý riadok Nuclino bez možnosti rozbalenia, iba s priamym odkazom "Vstúpiť" -->
+            <div class="doc-category">
+                <div>🌐 Úroveň 1: Nuclino</div>
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
             <!-- 2. SÚKROMNÝ PRIEČINOK: SÚKROMNÝ ARCHÍV -->
-            <div class="doc-category" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
-                🔒 <span>Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
+            <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
+                <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
             <div id="cat-lib-private" class="doc-subcategory-container">
                 <div class="doc-subcategory">
@@ -220,7 +213,7 @@ async function setupUserSession(emailStr) {
             loadLibrary();
             show('dashboard');
         } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba sietee: " + e.message); }
+    } catch(e) { alert("Kritická chyba siete: " + e.message); }
 }
 
 function applyRoleVisibility() {
@@ -247,19 +240,7 @@ function applyRoleVisibility() {
         }
     });
 
-    const zoneNuclino = document.getElementById("zone-lib-nuclino");
-    if (zoneNuclino) {
-        // 🔥 VYLEPŠENÉ: Napovedajúci placeholder v nahrávacom boxe pre firemné Nuclino odkazy
-        zoneNuclino.innerHTML = `
-            <div class="add-link-box">
-                <input type="text" id="url-lib-nuclino" class="url-field" placeholder="Prilep odkaz z app.nuclino.com... ALEBO">
-                <label class="file-label" for="file-lib-nuclino">📎 Súbor z PC</label>
-                <input type="file" id="file-lib-nuclino" onchange="handleFileSelected('lib', 'nuclino')">
-                <button type="button" onclick="addLibraryItem(event, 'nuclino')">➕ Pridať do Nuclino</button>
-            </div>
-        `;
-    }
-
+    // Nahrávacia zóna pre Súkromný archív (Vidí ju iba Admin)
     const zonePrivate = document.getElementById("zone-lib-private");
     if (zonePrivate) {
         if (currentUser && currentUser.role === "admin") {
@@ -293,9 +274,7 @@ function loadLibrary() {
     const myEmail = currentUser ? currentUser.email.toLowerCase() : "";
 
     db.collection("library").onSnapshot((snapshot) => {
-        document.getElementById("list-lib-nuclino").innerHTML = "";
         document.getElementById("list-lib-private").innerHTML = "";
-        
         let hasVisiblePrivateDocs = false;
 
         snapshot.forEach((doc) => {
@@ -308,18 +287,7 @@ function loadLibrary() {
             else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) fileIcon = "📗";
             else if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc")) fileIcon = "📘";
 
-            if (data.folderType === "nuclino") {
-                document.getElementById("list-lib-nuclino").innerHTML += `
-                    <div class="doc-item">
-                        <a href="${data.fileUrl}" target="_blank"><span class="doc-icon">${fileIcon}</span> <span>${data.fileName}</span></a>
-                        <div class="doc-actions">
-                            <button class="rename-btn" onclick="renameLibraryItem('${id}', '${data.fileName}')">✏️</button>
-                            <button class="delete-btn" onclick="deleteLibraryItem('${id}')">Zmazať</button>
-                        </div>
-                    </div>
-                `;
-            } 
-            else if (data.folderType === "private") {
+            if (data.folderType === "private") {
                 const allowedEmail = data.allowedUser ? data.allowedUser.toLowerCase().trim() : "";
                 
                 if (isAdmin || myEmail === allowedEmail) {
@@ -534,13 +502,6 @@ async function deleteDocument(docId) {
 
 /* 🧭 POMOCNÉ FUNKCIE ROZHRANIA */
 function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
-
-// Ochranná funkcia pre harmoniku, aby kliknutie na externý odkaz nezbalilo/nerozbalilo priečinok
-function handleCategoryClick(event, id) {
-    if (event.target.tagName.toLowerCase() !== 'a') {
-        toggleAccordion(id);
-    }
-}
 
 function toggleAccordion(id) {
     const container = document.getElementById(id);
