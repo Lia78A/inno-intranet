@@ -1,243 +1,212 @@
 <!DOCTYPE html>
 <html lang="sk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INNO Firebase Intranet</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-}
-
-/* LOGIN */
-.login {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.box {
-  background: #1e293b;
-  padding: 30px;
-  border-radius: 12px;
-  width: 320px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 8px;
-  background: #334155;
-  color: white;
-}
-
-button {
-  width: 100%;
-  padding: 10px;
-  background: #2563eb;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-}
-
-/* APP */
-.app {
-  display: none;
-  height: 100vh;
-}
-
-.sidebar {
-  width: 220px;
-  background: #111827;
-  padding: 20px;
-  position: fixed;
-  height: 100%;
-}
-
-.content {
-  margin-left: 240px;
-  padding: 20px;
-}
-
-.menu {
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.menu:hover {
-  background: #1f2937;
-}
-
-.card {
-  background: #1e293b;
-  padding: 15px;
-  margin: 10px 0;
-  border-radius: 10px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INNO Firebase Intranet</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { margin: 0; font-family: Arial; background: #0f172a; color: white;}
+        /* LOGIN */
+        .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
+        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
+        button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
+        /* APP */
+        .app { display: none; height: 100vh;}
+        .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
+        .content { margin-left: 240px; padding: 20px;}
+        .menu { padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;}
+        .menu:hover { background: #1f2937;}
+        .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
+        .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
+        .admin-user-card select { width: auto; margin: 0; padding: 5px;}
+    </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="login">
-  <div class="box">
-    <h2>INNO Login</h2>
-
-    <input id="email" placeholder="email">
-    <input id="password" type="password" placeholder="heslo">
-
-    <button onclick="login()">Login</button>
-  </div>
+<div id="login" class="login"> 
+    <div class="box"> 
+        <h2>INNO Login</h2>
+        <input id="email" placeholder="email"> 
+        <input id="password" type="password" placeholder="heslo">
+        <button onclick="login()">Login</button> 
+    </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
-
-  <div class="sidebar">
-    <h3>INNO</h3>
-
-    <div class="menu" onclick="show('dashboard')">Dashboard</div>
-    <div class="menu" onclick="show('docs')">Dokumenty</div>
-    <div class="menu" onclick="show('hr')">HR</div>
-    <div class="menu" onclick="show('admin')">Admin</div>
-    <div class="menu" onclick="logout()">Logout</div>
-  </div>
-
-  <div class="content">
-
-    <div id="dashboard">
-      <h2>Dashboard</h2>
-      <div class="card" id="welcome"></div>
+    <div class="sidebar"> 
+        <h3>INNO</h3>
+        <div class="menu" onclick="show('dashboard')">Dashboard</div> 
+        <div class="menu" onclick="show('docs')">Dokumenty</div> 
+        <div class="menu" id="menu-library" onclick="show('library')">Knižnica</div> 
+        <div class="menu" id="menu-hr" onclick="show('hr')">HR</div> 
+        <div class="menu" id="menu-admin" onclick="show('admin')">Admin</div> 
+        <div class="menu" onclick="logout()">Logout</div> 
     </div>
+    
+    <div class="content">
+        <div id="dashboard"> 
+            <h2>Dashboard</h2> 
+            <div class="card" id="welcome"></div> 
+        </div>
+        
+        <div id="docs" style="display:none;"> 
+            <h2>Dokumenty</h2> 
+            <div class="card">GDPR smernica</div> 
+            <div class="card">BOZP smernica</div> 
+        </div>
 
-    <div id="docs" style="display:none;">
-      <h2>Dokumenty</h2>
-      <div class="card">GDPR smernica</div>
-      <div class="card">BOZP smernica</div>
+        <div id="library" style="display:none;"> 
+            <h2>Knižnica</h2> 
+            <div class="card">Interná encyklopédia INNO</div> 
+            <div class="card">Zoznam odporúčanej literatúry</div> 
+        </div>
+        
+        <div id="hr" style="display:none;"> 
+            <h2>HR sekcia</h2> 
+            <div class="card">Mzdy 🔒</div> 
+        </div>
+        
+        <div id="admin" style="display:none;"> 
+            <h2>Admin panel - Správa rolí</h2> 
+            <div id="users"></div> 
+        </div>
     </div>
-
-    <div id="hr" style="display:none;">
-      <h2>HR sekcia</h2>
-      <div class="card">Mzdy 🔒</div>
-    </div>
-
-    <div id="admin" style="display:none;">
-      <h2>Admin panel</h2>
-      <div id="users"></div>
-    </div>
-
-  </div>
 </div>
 
 <script>
-
-/* 🔥 FIREBASE CONFIG (SEM DOPLŇ SVOJE) */
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID",
+/* 🔥 FIREBASE CONFIG (Doplň svoje údaje, ak ich prepíšeš) */
+const firebaseConfig = { 
+    apiKey: "YOUR_KEY", 
+    authDomain: "YOUR_DOMAIN", 
+    projectId: "YOUR_ID",
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 let currentUser = null;
 
-/* LOGIN */
+// SLEDOVANIE STAVU PRIHLÁSENIA (Spustí sa samo pri načítaní stránky)
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        // Používateľ je prihlásený, načítame dáta z Firestore podľa e-mailu
+        const userDocId = user.email.split("@")[0];
+        const doc = await db.collection("users").doc(userDocId).get();
+        
+        if (doc.exists) {
+            currentUser = doc.data();
+            currentUser.docId = userDocId; // Uložíme si ID dokumentu pre neskoršie úpravy
+            
+            document.getElementById("login").style.display = "none";
+            document.getElementById("app").style.display = "block";
+            
+            document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || user.email) + " (" + currentUser.role + ")";
+            
+            applyRoleVisibility();
+            loadAdmin();
+            show('dashboard'); // Predvolene zobrazíme Dashboard
+        } else {
+            alert("Váš účet nemá vytvorený profil v databáze Firestore!");
+            logout();
+        }
+    } else {
+        // Používateľ nie je prihlásený, zobrazíme login
+        document.getElementById("login").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+    }
+});
+
+/* LOGIN FUNCTION */
 function login() {
-
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(async (userCredential) => {
-
-      const user = userCredential.user;
-
-      const doc = await db.collection("users").doc(user.email.split("@")[0]).get();
-
-      currentUser = doc.data();
-
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-
-      applyRole();
-      loadAdmin();
-
-      document.getElementById("welcome").innerText =
-        "Vitaj " + currentUser.name + " (" + currentUser.role + ")";
-    })
+    const email = document.getElementById("email").value; 
+    const password = document.getElementById("password").value;
+    
+    auth.signInWithEmailAndPassword(email, password)
     .catch(err => alert(err.message));
 }
 
-/* ROLE LOGIC */
-function applyRole() {
+/* ROLY A VIDITEĽNOSŤ V SIDEBARE */
+function applyRoleVisibility() {
+    // Najprv zobrazíme všetko
+    document.getElementById("menu-admin").style.display = "block";
+    document.getElementById("menu-hr").style.display = "block";
 
-  if (currentUser.role === "user") {
-    document.getElementById("admin").style.display = "none";
-    document.getElementById("hr").style.display = "none";
-  }
-
-  if (currentUser.role === "hr") {
-    document.getElementById("admin").style.display = "none";
-  }
+    // Skryjeme položky na základe role
+    if (currentUser.role === "user") { 
+        document.getElementById("menu-admin").style.display = "none"; 
+        document.getElementById("menu-hr").style.display = "none"; 
+    }
+    if (currentUser.role === "hr") { 
+        document.getElementById("menu-admin").style.display = "none"; 
+    }
 }
 
-/* NAV */
-function show(id) {
-  document.querySelectorAll(".content > div")
-    .forEach(d => d.style.display = "none");
-
-  document.getElementById(id).style.display = "block";
+/* PREPÍNANIE ZÁLOŽIEK */
+function show(id) { 
+    document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
+    document.getElementById(id).style.display = "block";
 }
 
-/* ADMIN USERS */
+/* ADMIN PANEL: NAČÍTANIE A SPRÁVA ROLÍ */
 async function loadAdmin() {
+    if (currentUser.role !== "admin") return;
+    
+    const snap = await db.collection("users").get();
+    let html = "";
+    
+    snap.forEach(doc => { 
+        const u = doc.data();
+        const docId = doc.id; // Potrebujeme pre úpravu roly
+        
+        html += `
+        <div class="admin-user-card"> 
+            <div>
+                <b>${u.name || 'Nepomenovaný užívateľ'}</b><br> 
+                ${u.email}
+            </div>
+            <div>
+                <label>Rola: </label>
+                <select onchange="updateUserRole('${docId}', this.value)">
+                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                    <option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option>
+                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+            </div>
+        </div> 
+        `; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
 
-  if (currentUser.role !== "admin") return;
-
-  const snap = await db.collection("users").get();
-
-  let html = "";
-
-  snap.forEach(doc => {
-    const u = doc.data();
-
-    html += `
-      <div class="card">
-        <b>${u.name}</b><br>
-        ${u.email}<br>
-        role: ${u.role}
-      </div>
-    `;
-  });
-
-  document.getElementById("users").innerHTML = html;
+/* FUNKCIA NA ZMENU ROLY ADMINOM */
+async function updateUserRole(docId, newRole) {
+    try {
+        await db.collection("users").doc(docId).update({
+            role: newRole
+        });
+        alert("Rola bola úspešne zmenená!");
+        
+        // Ak admin zmenil rolu sám sebe, hneď aktualizujeme zobrazenie
+        if (docId === currentUser.docId) {
+            currentUser.role = newRole;
+            applyRoleVisibility();
+            if (newRole !== 'admin') show('dashboard');
+        }
+    } catch (error) {
+        alert("Chyba pri zmene roly: " + error.message);
+    }
 }
 
 /* LOGOUT */
-function logout() {
-  auth.signOut();
-  location.reload();
+function logout() { 
+    auth.signOut().then(() => {
+        currentUser = null;
+    });
 }
-
 </script>
-
 </body>
 </html>
