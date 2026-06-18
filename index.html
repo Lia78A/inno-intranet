@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
+    <!-- Načítanie oficiálnych knižníc Firebase (kompatibilný režim pre stabilný beh) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
+        /* Globálne štýly pre moderný tmavý vzhľad firemného intranetu */
         body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white;}
-        /* LOGIN */
+        
+        /* ŠTÝLY PRE PRIHLASOVACIU OBRAZOVKU */
         .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
         .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
         input, select { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
         button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
         button:hover { background: #1d4ed8; }
-        /* APP */
+        
+        /* ŠTÝLY PRE HLAVNÚ APLIKÁCIU */
         .app { display: none; height: 100vh;}
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
         .content { margin-left: 240px; padding: 20px;}
@@ -23,21 +27,24 @@
         .menu:hover { background: #1f2937;}
         .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         
+        /* Správa užívateľských rolí v admin paneli */
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
 
-        /* ŠTÝLY PRE DOKUMENTY */
+        /* ŠTÝLY PRE SEKCIE DOKUMENTOV */
         .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
         .doc-category:hover { background: #334155; }
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
         .doc-item-list { margin: 5px 0; padding-left: 0; }
         
+        /* Vzhľad jedného riadku dokumentu v zozname */
         .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
         .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; flex: 1; }
         .doc-item a:hover { text-decoration: underline; }
         .doc-icon { font-size: 1.4em; } 
         
+        /* Akčné tlačidlá pri dokumentoch */
         .doc-actions { display: flex; gap: 8px; align-items: center; }
         .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .delete-btn:hover { background: #dc2626; }
@@ -48,20 +55,21 @@
         .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .history-btn:hover { background: #0369a1; }
 
+        /* Vyskakovací box s históriou prečítania dokumentu pre admina */
         .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
+        /* ZMENA: Formulár má teraz iba jedno veľké vstupné pole pre odkaz */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
-        .add-link-box input { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
-        .add-link-box input.url-field { flex: 2; }
-        .add-link-box button { width: auto; padding: 0 12px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
+        .add-link-box input.url-field { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
+        .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
         .add-link-box button:hover { background: #059669; }
     </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- BLOK 1: PRIHLASOVACIA OBRAZOVKA -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -71,8 +79,9 @@
     </div>
 </div>
 
-<!-- APP -->
+<!-- BLOK 2: HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
+    <!-- Bočný navigačný panel -->
     <div class="sidebar"> 
         <h3>INNO</h3>
         <div class="menu" onclick="show('dashboard')">Dashboard</div> 
@@ -83,17 +92,19 @@
         <div class="menu" onclick="logout()">Logout</div> 
     </div>
     
+    <!-- Hlavný obsah pre aktívne záložky -->
     <div class="content">
+        <!-- Dashboard -->
         <div id="dashboard"> 
             <h2>Dashboard</h2> 
             <div class="card" id="welcome"></div> 
         </div>
         
-        <!-- ZÁLOŽKA DOKUMENTY -->
+        <!-- Záložka Dokumenty -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
-            <!-- ÚROVEŇ 1: ISO -->
+            <!-- SEKCIA: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -120,7 +131,7 @@
                 </div>
             </div>
 
-            <!-- ÚROVEŇ 1: ISMS -->
+            <!-- SEKCIA: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -148,17 +159,20 @@
             </div>
         </div>
 
+        <!-- Záložka Knižnica -->
         <div id="library" style="display:none;"> 
             <h2>Knižnica</h2> 
             <div class="card">Interná encyklopédia INNO</div> 
             <div class="card">Zoznam odporúčanej literatúry</div> 
         </div>
         
+        <!-- Záložka HR -->
         <div id="hr" style="display:none;"> 
             <h2>HR sekcia</h2> 
             <div class="card">Mzdy 🔒</div> 
         </div>
         
+        <!-- Záložka Admin panel -->
         <div id="admin" style="display:none;"> 
             <h2>Admin panel - Správa rolí</h2> 
             <div id="users"></div> 
@@ -167,7 +181,7 @@
 </div>
 
 <script>
-/* 🔥 FIREBASE CONFIG */
+/* 🔥 INICIALIZÁCIA A KONFIGURÁCIA FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
     authDomain: "inno-intranet.firebaseapp.com",
@@ -183,7 +197,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
 
-// SLEDOVANIE STAVU PRIHLÁSENIA
+/* 🔄 STATUS AUTH: Sledovanie prihláseného stavu používateľa */
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         const username = user.email.split("@")[0].toLowerCase();
@@ -219,6 +233,7 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+/* 🔑 LOGIKA PRIHLÁSENIA */
 function login() {
     const email = document.getElementById("email").value.trim(); 
     const password = document.getElementById("password").value;
@@ -232,30 +247,24 @@ function login() {
     .catch(err => alert("Chyba prihlásenia: " + err.message));
 }
 
-/* ROLY A VZHĽAD */
+/* 👥 DETEKCIA ROLÍ A VYVTVORENIE VSTUPNÝCH POLÍ */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
     const categories = [
-        { l1: "iso", l2: "politika" },
-        { l1: "iso", l2: "ciele" },
-        { l1: "iso", l2: "smernice" },
-        { l1: "iso", l2: "ine" },
-        { l1: "isms", l2: "politika" },
-        { l1: "isms", l2: "ciele" },
-        { l1: "isms", l2: "smernice" },
-        { l1: "isms", l2: "ine" }
+        { l1: "iso", l2: "politika" }, { l1: "iso", l2: "ciele" }, { l1: "iso", l2: "smernice" }, { l1: "iso", l2: "ine" },
+        { l1: "isms", l2: "politika" }, { l1: "isms", l2: "ciele" }, { l1: "isms", l2: "smernice" }, { l1: "isms", l2: "ine" }
     ];
 
     categories.forEach(cat => {
         const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
         if (zone) {
+            // ZMENA: Políčko pre názov sme úplne zmazali. Zostalo iba pole pre odkaz.
             zone.innerHTML = `
                 <div class="add-link-box">
-                    <input type="text" id="name-${cat.l1}-${cat.l2}" placeholder="Názov dokumentu...">
-                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)" oninput="autoExtractFileName('${cat.l1}', '${cat.l2}')">
-                    <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
+                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Prilep odkaz zo SharePointu / OneDrive...">
+                    <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať dokument</button>
                 </div>
             `;
         }
@@ -271,7 +280,7 @@ function applyRoleVisibility() {
     }
 }
 
-/* 📥 NAČÍTANIE DOKUMENTOV S INTELIGENTNÝMI IKONAMI */
+/* 📥 REÁLNE NAČÍTAVANIE DOKUMENTOV S FAREBNÝMI IKONAMI PODĽA PRÍPONY */
 async function loadDocuments() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     const isHr = (currentUser && currentUser.role === 'hr');
@@ -309,7 +318,7 @@ async function loadDocuments() {
                         : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
                 }
 
-                // 🧠 Dynamický výber ikony podľa koncovky v názve súboru
+                // 🧠 FILTRÁCIA IKONIEK: Podľa prípony v reálnom názve priradíme peknú ikonu súboru
                 let fileIcon = "📄"; 
                 const lowerName = data.fileName.toLowerCase();
                 if (lowerName.endsWith(".pdf")) fileIcon = "📕";
@@ -344,7 +353,7 @@ async function loadDocuments() {
     });
 }
 
-/* 👁️ POTVRDENIE PREČÍTANIA */
+/* 👁️ POTVRDENIE O PREČÍTANÍ DOKUMENTU */
 async function confirmRead(docId, docName) {
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli a beriete ho na vedomie?`)) return;
 
@@ -368,7 +377,7 @@ async function confirmRead(docId, docName) {
     }
 }
 
-/* 📊 HISTÓRIA PREČÍTANIA */
+/* 📊 ZOBRAZENIE HISTÓRIE PREČÍTANIA PRE ADMINA */
 function loadDocumentHistory(docId) {
     db.collection("logs")
       .where("docId", "==", docId)
@@ -398,23 +407,19 @@ function loadDocumentHistory(docId) {
       });
 }
 
-/* 📤 PRIDANIE ODKAZU */
+/* 📤 ZMENA: PRIDANIE ODKAZU S PLNE AUTOMATICKOU EXTRAKCIOU NÁZVU PRI UKLADANÍ */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    
-    if(!nameInput || !urlInput) {
-        alert("Systémová chyba: Vstupné polia neboli nájdené.");
+    if(!urlInput) {
+        alert("Systémová chyba: Vstupné pole nebolo nájdené.");
         return;
     }
 
-    const name = nameInput.value.trim();
     let url = urlInput.value.trim();
-
-    if (!name || !url) {
-        alert("Prosím, vyplň názov aj odkaz.");
+    if (!url) {
+        alert("Prosím, vlož odkaz zo SharePointu / OneDrive.");
         return;
     }
 
@@ -422,20 +427,56 @@ async function addDocumentLink(event, catL1, catL2) {
         url = "https://" + url;
     }
 
+    // 🧠 AUTOMATICKÝ PARSER NÁZVU: Práve v tomto momente vyťažíme čistý názov a príponu priamo z URL adresy
+    let extractedName = "";
+    try {
+        const urlObj = new URL(url);
+        const params = new URLSearchParams(urlObj.search);
+        
+        // Krok A: Skúsime vytiahnuť názov z parametra "file=" alebo "id=" (najbežnejšie riešenie vo OneDrive)
+        if (params.has("file")) {
+            extractedName = params.get("file");
+        } else if (params.has("id")) {
+            const idParam = params.get("id");
+            extractedName = idParam.substring(idParam.lastIndexOf('/') + 1);
+        }
+
+        // Krok B: Ak parameter v URL chýba, vezmeme názov priamo z konca cesty (pathname) pred otáznikom
+        if (!extractedName) {
+            const pathname = urlObj.pathname;
+            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
+            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
+                extractedName = decodeURIComponent(lastPart);
+            }
+        }
+
+        // Vyčistíme prípadné neočakávané otázniky na konci názvu
+        if (extractedName && extractedName.includes("?")) {
+            extractedName = extractedName.split("?")[0];
+        }
+    } catch (e) {
+        console.log("Chyba analýzy URL adresy: " + e.message);
+    }
+
+    // Poistka: Ak by odkaz bol natoľko atypický, že z neho nevieme získať názov, dáme univerzálny názov, aby kód nespadol
+    if (!extractedName) {
+        extractedName = "Dokument_" + new Date().toLocaleDateString("sk-SK");
+    }
+
+    // Uložíme čisté dáta do Firebase Firestore
     try {
         await db.collection("documents").add({
-            fileName: name,
+            fileName: extractedName, // Tu sa už ukladá 100% reálny názov aj s koncovkou súboru
             fileUrl: url,
             categoryL1: catL1.toLowerCase(), 
             categoryL2: catL2.toLowerCase(),
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
-        alert("Dokument bol úspešne pridaný do intranetu!");
-        nameInput.value = "";
+        alert("Dokument bol úspešne pridaný s reálnym názvom: " + extractedName);
         urlInput.value = "";
     } catch (error) {
-        alert("Chyba pri ukladaní: " + error.message);
+        alert("Chyba pri ukladaní do databázy: " + error.message);
     }
 }
 
@@ -450,7 +491,7 @@ async function deleteDocument(docId) {
     }
 }
 
-/* ADMIN PANEL */
+/* ADMIN PANEL - SPRÁVA ROLES */
 async function loadAdmin() {
     if (!currentUser || currentUser.role !== "admin") return;
     const snap = await db.collection("users").get();
@@ -489,10 +530,7 @@ async function updateUserRole(docId, newRole) {
     }
 }
 
-function logout() { 
-    auth.signOut().then(() => { currentUser = null; location.reload(); });
-}
-
+/* POMOCNÉ METÓDY NAVIGÁCIE */
 function show(id) { 
     document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
     document.getElementById(id).style.display = "block";
@@ -506,52 +544,8 @@ function toggleAccordion(id) {
     arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-function toggleHistoryVisibility(docId) {
-    const box = document.getElementById(`history-box-${docId}`);
-    if (box) {
-        box.style.display = box.style.display === "block" ? "none" : "block";
-    }
-}
-
-/* 🧠 AUTOMATICKÁ EXTRAKCIA NÁZVU A PRÍPONY Z ODKAZU */
-function autoExtractFileName(catL1, catL2) {
-    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
-    
-    if (!urlInput || !nameInput) return;
-    
-    let urlText = urlInput.value.trim();
-    if (!urlText) return;
-
-    try {
-        let decodedName = "";
-        const urlObj = new URL(urlText);
-        const params = new URLSearchParams(urlObj.search);
-        
-        if (params.has("file")) {
-            decodedName = params.get("file");
-        } else if (params.has("id")) {
-            const idParam = params.get("id");
-            decodedName = idParam.substring(idParam.lastIndexOf('/') + 1);
-        }
-
-        if (!decodedName) {
-            const pathname = urlObj.pathname;
-            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
-            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
-                decodedName = decodeURIComponent(lastPart);
-            }
-        }
-
-        if (decodedName) {
-            if (decodedName.includes("?")) {
-                decodedName = decodedName.split("?")[0];
-            }
-            nameInput.value = decodedName;
-        }
-    } catch (e) {
-        // Ignorujeme, kým odkaz nie je kompletný
-    }
+function logout() { 
+    auth.signOut().then(() => { currentUser = null; location.reload(); });
 }
 </script>
 </body>
