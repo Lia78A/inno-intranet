@@ -51,7 +51,6 @@
         .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .history-btn:hover { background: #0369a1; }
 
-        /* Elegantný odkaz pre Nuclino "Vstúpiť" */
         .nuclino-go-link { color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 0.95em; padding: 4px 12px; border-radius: 6px; transition: background 0.2s;}
         .nuclino-go-link:hover { background: rgba(56, 189, 248, 0.15); text-decoration: underline; }
 
@@ -61,7 +60,7 @@
 
         .add-link-box { display: flex; gap: 10px; background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center; flex-wrap: wrap;}
         .add-link-box input.url-field { flex: 2; min-width: 200px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
-        .add-link-box input.access-field { flex: 1; min-width: 130px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8;}
+        .add-link-box input.access-field { flex: 1; min-width: 130px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #111827; color: #38bdf8; border: 1px solid #38bdf8;}
         .add-link-box .file-label { background: #475569; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; height: 20px; display: flex; align-items: center; gap: 5px; white-space: nowrap;}
         .add-link-box .file-label:hover { background: #64748b; }
         .add-link-box input[type="file"] { display: none; }
@@ -131,13 +130,12 @@
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
-            <!-- 🔥 OPRAVENÉ: Čistý riadok Nuclino bez možnosti rozbalenia, iba s priamym odkazom "Vstúpiť" -->
             <div class="doc-category">
                 <div>🌐 Úroveň 1: Nuclino</div>
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
-            <!-- 2. SÚKROMNÝ PRIEČINOK: SÚKROMNÝ ARCHÍV -->
+            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -145,6 +143,7 @@
                 <div class="doc-subcategory">
                     🔑 <b>Dokumenty s prideleným prístupom</b>
                     <div id="list-lib-private" class="doc-item-list"></div>
+                    <!-- 🔥 FIX: Kompletný duálny nahrávací box so sponkou a polom pre e-mail -->
                     <div id="zone-lib-private"></div>
                 </div>
             </div>
@@ -240,14 +239,14 @@ function applyRoleVisibility() {
         }
     });
 
-    // Nahrávacia zóna pre Súkromný archív (Vidí ju iba Admin)
+    // 🔥 FIX: Generovanie plne vybaveného duálneho boxu pre Súkromný archív
     const zonePrivate = document.getElementById("zone-lib-private");
     if (zonePrivate) {
         if (currentUser && currentUser.role === "admin") {
             document.getElementById("folder-lib-private").style.display = "flex";
             zonePrivate.innerHTML = `
                 <div class="add-link-box">
-                    <input type="text" id="url-lib-private" class="url-field" placeholder="Prilep tajný odkaz... ALEBO">
+                    <input type="text" id="url-lib-private" class="url-field" placeholder="Prilep odkaz na tajný dokument... ALEBO">
                     <label class="file-label" for="file-lib-private">📎 Súbor z PC</label>
                     <input type="file" id="file-lib-private" onchange="handleFileSelected('lib', 'private')">
                     <input type="text" id="access-lib-private" class="access-field" placeholder="E-mail pre prístup (napr. peter@inno.sk)">
@@ -336,6 +335,7 @@ async function addLibraryItem(event, folderType) {
         allowedUserEmail = accessInput.value.trim().toLowerCase();
     }
 
+    // Fyzický výber dokumentu z disku s extrakciou 100% presného názvu
     if (fileInput && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         finalName = file.name;
