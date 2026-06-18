@@ -56,7 +56,7 @@
 
         .add-link-box { display: flex; gap: 10px; background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center; flex-wrap: wrap;}
         .add-link-box input.url-field { flex: 2; min-width: 200px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
-        .add-link-box .file-label { background: #475569; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; height: 20px; display: flex; align-items: center; gap: 5px; white-space: nowrap;}
+        .add-link-box class.file-label, .add-link-box .file-label { background: #475569; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; height: 20px; display: flex; align-items: center; gap: 5px; white-space: nowrap;}
         .add-link-box .file-label:hover { background: #64748b; }
         .add-link-box input[type="file"] { display: none; }
         .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
@@ -182,43 +182,56 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
 
-/* 🔐 INOVAVANÉ VYHĽADÁVANIE POUŽÍVATEĽA PODĽA SKUTOČNÉHO E-MAILU */
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        const lowerEmail = user.email.toLowerCase();
-        
-        // 🔥 ZMENA: Hľadáme priamo v celej kolekcii "users" zhodu podrobne podľa poľa "email"
-        const snap = await db.collection("users").where("email", "==", lowerEmail).get();
-        
+/* 🔐 AUTOMATICKÉ PRIHLÁSENIE PRI REFRESHI */
+auth.onAuthStateChanged((user) => {
+    if (user && !currentUser) {
+        // Ak relácia beží, ale dáta nemáme, vynútime prihlásenie cez email
+        setupUserSession(user.email.toLowerCase());
+    } else if (!user) {
+        document.getElementById("login").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+    }
+});
+
+/* 📥 HLAVNÁ PRIHLASOVACIA FUNKCIA: VYHĽADÁVA PODĽA EMAILU STABILNE */
+async function login() {
+    const email = document.getElementById("email").value.trim().toLowerCase(); 
+    const password = document.getElementById("password").value;
+    if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
+    
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        await setupUserSession(userCredential.user.email.toLowerCase());
+    } catch(err) {
+        alert("Chyba prihlásenia: " + err.message);
+    }
+}
+
+/* 👤 ROZBALENIE PROFILU A ŠTART APLIKÁCIE */
+async function setupUserSession(emailStr) {
+    try {
+        const snap = await db.collection("users").where("email", "==", emailStr).get();
         if (!snap.empty) {
             const userDoc = snap.docs[0];
             currentUser = userDoc.data();
             currentUser.docId = userDoc.id;
-            currentUser.email = lowerEmail;
+            currentUser.email = emailStr;
             
             document.getElementById("login").style.display = "none";
             document.getElementById("app").style.display = "block";
-            document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || user.email) + " (" + currentUser.role + ")";
+            document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || emailStr) + " (" + currentUser.role + ")";
             
             applyRoleVisibility();
             loadAdmin();
             loadDocuments();
             show('dashboard');
         } else {
-            alert("CHYBA: V databáze sa nenašiel profil pre tento e-mail: " + user.email);
+            alert("V databáze chýba profil pre e-mail: " + emailStr);
             logout();
         }
-    } else {
-        document.getElementById("login").style.display = "flex";
-        document.getElementById("app").style.display = "none";
+    } catch(e) {
+        alert("Kritická chyba siete: " + e.message);
     }
-});
-
-function login() {
-    const email = document.getElementById("email").value.trim(); 
-    const password = document.getElementById("password").value;
-    if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
-    auth.signInWithEmailAndPassword(email, password).catch(err => alert("Chyba: " + err.message));
 }
 
 function applyRoleVisibility() {
@@ -233,7 +246,7 @@ function applyRoleVisibility() {
     categories.forEach(cat => {
         const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
         if (zone) {
-            if (currentUser?.role === "admin") {
+            if (currentUser && currentUser.role === "admin") {
                 zone.innerHTML = `
                     <div class="add-link-box">
                         <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Prilep SharePoint odkaz... ALEBO">
@@ -248,11 +261,11 @@ function applyRoleVisibility() {
         }
     });
 
-    if (currentUser?.role === "user") { 
+    if (currentUser && currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
     }
-    if (currentUser?.role === "hr") { 
+    if (currentUser && currentUser.role === "hr") { 
         document.getElementById("menu-admin").style.display = "none"; 
     }
 }
@@ -266,7 +279,7 @@ function handleFileSelected(catL1, catL2) {
 }
 
 async function loadDocuments() {
-    const isAdmin = (currentUser?.role === 'admin');
+    const isAdmin = (currentUser && currentUser.role === 'admin');
     
     let signedDocs = [];
     try {
@@ -329,7 +342,7 @@ async function loadDocuments() {
 
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
-    if (currentUser?.role !== "admin") return; 
+    if (!currentUser || currentUser.role !== "admin") return; 
 
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
     const fileInput = document.getElementById(`file-${catL1}-${catL2}`);
@@ -391,7 +404,7 @@ async function addDocumentLink(event, catL1, catL2) {
 }
 
 async function renameDocument(docId, currentName) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     let newName = prompt("Zadajte nový názov pre tento dokument:", currentName);
     if (newName && newName.trim() && newName.trim() !== currentName) {
         try {
@@ -401,6 +414,7 @@ async function renameDocument(docId, currentName) {
 }
 
 async function confirmRead(docId, docName) {
+    if (!currentUser) return;
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli?`)) return;
     const formattedDate = new Date().toLocaleString("sk-SK");
     try {
@@ -414,7 +428,7 @@ async function confirmRead(docId, docName) {
 }
 
 function loadDocumentHistory(docId) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
         const historyBox = document.getElementById(`history-box-${docId}`);
         if (!historyBox) return;
@@ -429,7 +443,7 @@ function loadDocumentHistory(docId) {
 }
 
 async function deleteDocument(docId) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     if (!confirm("Vymazať?")) return;
     try { await db.collection("documents").doc(docId).delete(); } catch (e) { alert(e.message); }
 }
@@ -447,7 +461,7 @@ function toggleHistoryVisibility(docId) {
     if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
 }
 async function loadAdmin() {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     const snap = await db.collection("users").get();
     let html = "";
     snap.forEach(doc => { 
@@ -457,7 +471,7 @@ async function loadAdmin() {
     document.getElementById("users").innerHTML = html;
 }
 async function updateUserRole(docId, newRole) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
 }
 function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
