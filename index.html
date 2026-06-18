@@ -52,7 +52,6 @@
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
-        /* FORMULÁR OBSAHUJE IBA JEDNO ČISTÉ POLE PRE ODKAZ */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
         .add-link-box input.url-field { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
         .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
@@ -207,7 +206,6 @@ auth.onAuthStateChanged(async (user) => {
         }
     } else {
         document.getElementById("login").style.display = "flex";
-        document.getElementById("app").style.none = "none";
         document.getElementById("app").style.display = "none";
     }
 });
@@ -303,6 +301,7 @@ async function loadDocuments() {
     });
 }
 
+/* 📥 POKROČILÁ EXTRAKCIA REÁLNEHO NÁZVU SÚBORU */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
@@ -314,13 +313,19 @@ async function addDocumentLink(event, catL1, catL2) {
 
     let finalName = "";
     try {
+        // Skúsime dekódovať celú URL pre prípad, že je názov schovaný hlbšie v texte
+        let decodedUrl = decodeURIComponent(url);
         const urlObj = new URL(url);
         const params = new URLSearchParams(urlObj.search);
+        
+        // 1. Skúsime štandardné SharePoint parametre
         if (params.has("file")) { finalName = params.get("file"); } 
         else if (params.has("id")) {
             const idParam = params.get("id");
             finalName = idParam.substring(idParam.lastIndexOf('/') + 1);
         }
+        
+        // 2. Ak nič, skúsime vytiahnuť názov priamo z cesty URL (pathname)
         if (!finalName) {
             const pathname = urlObj.pathname;
             const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
@@ -328,13 +333,39 @@ async function addDocumentLink(event, catL1, catL2) {
                 finalName = decodeURIComponent(lastPart);
             }
         }
+        
+        // 3. AGRESÍVNA DETEKCIA: Ak stále nemáme názov, pozrieme sa, či adresa neobsahuje typické prípony
+        if (!finalName || !finalName.includes(".")) {
+            const extensions = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
+            for (let ext of extensions) {
+                if (decodedUrl.toLowerCase().includes(ext)) {
+                    // Nájdeme kde prípona končí a skúsime vysekať text pred ňou po najbližšiu lomku
+                    let endIndex = decodedUrl.toLowerCase().indexOf(ext) + ext.length;
+                    let subStr = decodedUrl.substring(0, endIndex);
+                    let lastSlash = subStr.lastIndexOf("/");
+                    if (lastSlash !== -1) {
+                        let candidate = subStr.substring(lastSlash + 1);
+                        if (candidate && candidate.length > ext.length && !candidate.includes("=:")) {
+                            finalName = candidate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
     } catch (e) {}
 
-    if (!finalName) {
-        const displayL1 = catL1.toUpperCase();
-        const displayL2 = catL2.charAt(0).toUpperCase() + catL2.slice(1);
-        finalName = `Dokument_${displayL1}_${displayL2}`;
+    // Ak všetky pokusy zlyhajú kvôli anonymnému / zašifrovanému odkazu, vypýtame si názov od užívateľa
+    if (!finalName || !finalName.includes(".") || finalName.length < 4) {
+        let manualName = prompt("Microsoft v tomto type odkazu úplne schoval názov súboru.\n\nZadajte reálny názov súboru aj s príponou (napr. Pozv59.docx):");
+        if (manualName && manualName.trim()) {
+            finalName = manualName.trim();
+        } else {
+            alert("Pridanie zrušené. Súbor musí mať zadaný názov.");
+            return;
+        }
     }
 
     try {
