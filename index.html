@@ -101,22 +101,22 @@
                 <div class="doc-subcategory">
                     🔒 <b>Politika</b> 
                     <div id="list-iso-politika" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISO" data-l2="politika"></div>
+                    <div class="admin-upload-zone" id="zone-iso-politika"></div>
                 </div>
                 <div class="doc-subcategory">
                     🎯 <b>Ciele</b> 
                     <div id="list-iso-ciele" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISO" data-l2="ciele"></div>
+                    <div class="admin-upload-zone" id="zone-iso-ciele"></div>
                 </div>
                 <div class="doc-subcategory">
                     📜 <b>Smernice</b> 
                     <div id="list-iso-smernice" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISO" data-l2="smernice"></div>
+                    <div class="admin-upload-zone" id="zone-iso-smernice"></div>
                 </div>
                 <div class="doc-subcategory">
                     📎 <b>Iné</b> 
                     <div id="list-iso-ine" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISO" data-l2="ine"></div>
+                    <div class="admin-upload-zone" id="zone-iso-ine"></div>
                 </div>
             </div>
 
@@ -127,22 +127,22 @@
                 <div class="doc-subcategory">
                     🔒 <b>Politika</b> 
                     <div id="list-isms-politika" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="politika"></div>
+                    <div class="admin-upload-zone" id="zone-isms-politika"></div>
                 </div>
                 <div class="doc-subcategory">
                     🎯 <b>Ciele</b> 
                     <div id="list-isms-ciele" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="ciele"></div>
+                    <div class="admin-upload-zone" id="zone-isms-ciele"></div>
                 </div>
                 <div class="doc-subcategory">
                     📜 <b>Smernice</b> 
                     <div id="list-isms-smernice" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="smernice"></div>
+                    <div class="admin-upload-zone" id="zone-isms-smernice"></div>
                 </div>
                 <div class="doc-subcategory">
                     📎 <b>Iné</b> 
                     <div id="list-isms-ine" class="doc-item-list"></div>
-                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="ine"></div>
+                    <div class="admin-upload-zone" id="zone-isms-ine"></div>
                 </div>
             </div>
         </div>
@@ -236,18 +236,28 @@ function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    document.querySelectorAll(".admin-upload-zone").forEach(zone => {
-        const l1 = zone.getAttribute("data-l1");
-        const l2 = zone.getAttribute("data-l2");
-        
-        // Zmena: ID vstupov sú teraz čisto textové bez pomlčiek, ktoré robili problémy
-        zone.innerHTML = `
-            <div class="add-link-box">
-                <input type="text" id="name${l1}${l2}" placeholder="Názov dokumentu...">
-                <input type="text" id="url${l1}${l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
-                <button type="button" onclick="addDocumentLink('${l1}', '${l2}')">➕ Pridať</button>
-            </div>
-        `;
+    const categories = [
+        { l1: "iso", l2: "politika" },
+        { l1: "iso", l2: "ciele" },
+        { l1: "iso", l2: "smernice" },
+        { l1: "iso", l2: "ine" },
+        { l1: "isms", l2: "politika" },
+        { l1: "isms", l2: "ciele" },
+        { l1: "isms", l2: "smernice" },
+        { l1: "isms", l2: "ine" }
+    ];
+
+    categories.forEach(cat => {
+        const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
+        if (zone) {
+            zone.innerHTML = `
+                <div class="add-link-box">
+                    <input type="text" id="name-${cat.l1}-${cat.l2}" placeholder="Názov dokumentu...">
+                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
+                    <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
+                </div>
+            `;
+        }
     });
 
     if (currentUser && currentUser.role === "user") { 
@@ -389,10 +399,11 @@ function toggleHistoryVisibility(docId) {
 }
 
 /* 📤 PRIDANIE ODKAZU */
-async function addDocumentLink(catL1, catL2) {
-    // Opravené smerovanie na vstupy
-    const nameInput = document.getElementById(`name${catL1}${catL2}`);
-    const urlInput = document.getElementById(`url${catL1}${catL2}`);
+async function addDocumentLink(event, catL1, catL2) {
+    if(event) event.preventDefault();
+
+    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
+    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
     
     if(!nameInput || !urlInput) {
         alert("Systémová chyba: Vstupné polia neboli nájdené.");
@@ -415,8 +426,8 @@ async function addDocumentLink(catL1, catL2) {
         await db.collection("documents").add({
             fileName: name,
             fileUrl: url,
-            categoryL1: catL1,
-            categoryL2: catL2,
+            categoryL1: catL1.toUpperCase(),
+            categoryL2: catL2.toLowerCase(),
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
