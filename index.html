@@ -24,7 +24,7 @@
         
         /* ŠTÝL PRE LOGO FIRMY */
         .sidebar-logo-container { width: 100%; max-width: 140px; height: auto; margin-bottom: 15px; display: block;}
-        .sidebar-logo-container img { width: 100%; height: auto; display: block;}
+        .sidebar-logo-container img { width: 100%; height: auto; display: block; border-radius: 4px;}
         
         /* STABILNÝ PROFIL V SIDEBARE */
         .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 5px 0 20px 0; font-size: 0.9em; border: 1px solid #334155; color: white; display: block !important;}
@@ -84,6 +84,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -93,12 +94,15 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
+        <!-- 🔥 FIX: Názov súboru opravený presne podľa tvojej štruktúry na GitHube -->
         <div class="sidebar-logo-container">
-            <img src="novis-logo.png" alt="novis logo">
+            <img src="inno_proj.png" id="sidebar-main-logo" alt="novis logo" onerror="this.onerror=null; this.src='https://images.squarespace-cdn.com/content/v1/5f1966a347b59368ca1794b6/1596706037610-SUL0P95PGLN79B27Y47M/Innovis_logo_RGB.png';">
         </div>
 
+        <!-- STABILNÝ PROFIL V SIDEBARE -->
         <div id="sidebar-user-box" class="sidebar-user-card">
             <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
             <div id="sidebar-user-role" class="sidebar-user-role">...</div>
@@ -119,6 +123,7 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -143,6 +148,7 @@
             </div>
         </div>
 
+        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
@@ -151,6 +157,7 @@
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
+            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -466,7 +473,7 @@ async function addDocumentLink(event, catL1, catL2) {
             if (params.has("file")) { finalName = params.get("file"); } 
             else if (params.has("id")) { finalName = params.get("id").substring(params.get("id").lastIndexOf('/') + 1); }
             if (!finalName) { finalName = decodeURIComponent(urlObj.pathname.substring(urlObj.pathname.lastIndexOf('/') + 1)); }
-        } catch (e) {}
+        } catch(e) {}
         if (!finalName || !finalName.includes(".")) { finalName = `Súbor_${catL1.toUpperCase()}_${catL2.charAt(0).toUpperCase() + catL2.slice(1)}.docx`; }
     } else { alert("Vlož odkaz alebo vyber súbor z PC."); return; }
     try {
@@ -483,7 +490,7 @@ async function renameDocument(docId, currentName) {
     if (!currentUser || currentUser.role !== "admin") return;
     let newName = prompt("Zadajte nový názov:", currentName);
     if (newName && newName.trim() && newName.trim() !== currentName) {
-        try { await db.collection("documents").doc(docId).update({ fileName: newName.trim() }); } catch (e) {}
+        try { await db.collection("documents").doc(docId).update({ fileName: newName.trim() }); } catch(e) {}
     }
 }
 
@@ -516,7 +523,7 @@ function loadDocumentHistory(docId) {
 async function deleteDocument(docId) {
     if (!currentUser || currentUser.role !== "admin") return;
     if (!confirm("Vymazať?")) return;
-    try { await db.collection("documents").doc(docId).delete(); } catch (e) {}
+    try { await db.collection("documents").doc(docId).delete(); } catch(e) {}
 }
 
 /* POMOCNÉ FUNKCIE ROZHRANIA */
