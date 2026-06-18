@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
+    <!-- Načítanie oficiálnych knižníc Firebase (kompatibilný režim pre stabilný beh) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
+        /* Globálne štýly pre tmavý moderný vzhľad intranetu */
         body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white;}
-        /* LOGIN */
+        
+        /* ŠTÝLY PRE PRIHLASOVACIU OBRAZOVKU */
         .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
         .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
         input, select { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
         button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
         button:hover { background: #1d4ed8; }
-        /* APP */
+        
+        /* ŠTÝLY PRE HLAVNÚ APLIKÁCIU */
         .app { display: none; height: 100vh;}
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
         .content { margin-left: 240px; padding: 20px;}
@@ -23,39 +27,40 @@
         .menu:hover { background: #1f2937;}
         .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         
+        /* Správa rolí v admin paneli */
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
 
-        /* ŠTÝLY PRE DOKUMENTY */
+        /* ŠTÝLY PRE SEKCIE DOKUMENTOV */
         .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
         .doc-category:hover { background: #334155; }
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
         .doc-item-list { margin: 5px 0; padding-left: 0; }
         
+        /* Vzhľad riadku samotného dokumentu */
         .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
         .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; flex: 1; }
         .doc-item a:hover { text-decoration: underline; }
         .doc-icon { font-size: 1.4em; } 
         
-        /* Akčné tlačidlá pri dokumentoch */
+        /* Tlačidlá akcií (Potvrdenie, História, Mazanie) */
         .doc-actions { display: flex; gap: 8px; align-items: center; }
         .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .delete-btn:hover { background: #dc2626; }
         
-        /* Tlačidlá pre Admina */
         .confirm-btn { background: #475569; color: #cbd5e1; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: bold;}
         .confirm-btn:hover { background: #64748b; color: white; }
         .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: 1px solid #10b981; }
         .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .history-btn:hover { background: #0369a1; }
 
-        /* História prečítania pod dokumentom */
+        /* Box pre rozbalenie histórie prečítania pod súborom */
         .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
-        /* FORMULÁR V JEDNOM RIADKU */
+        /* Kompaktný formulár pre vkladanie odkazov v jednom riadku */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
         .add-link-box input { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
         .add-link-box input.url-field { flex: 2; }
@@ -65,16 +70,19 @@
 </head>
 <body>
 
+<!-- BLOK 1: PRIHLASOVACÍ FORMULÁR -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
         <input id="email" placeholder="email"> 
         <input id="password" type="password" placeholder="heslo">
-        <button onclick="login()">Login</button> 
+        <button type="button" onclick="login()">Login</button> 
     </div>
 </div>
 
+<!-- BLOK 2: HLAVNÁ APLIKÁCIA INTRANETU -->
 <div id="app" class="app">
+    <!-- Bočné navigačné menu -->
     <div class="sidebar"> 
         <h3>INNO</h3>
         <div class="menu" onclick="show('dashboard')">Dashboard</div> 
@@ -85,15 +93,19 @@
         <div class="menu" onclick="logout()">Logout</div> 
     </div>
     
+    <!-- Obsahová časť pre jednotlivé záložky -->
     <div class="content">
+        <!-- Záložka Dashboard -->
         <div id="dashboard"> 
             <h2>Dashboard</h2> 
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- Záložka Dokumenty -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
+            <!-- ÚROVEŇ ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -120,6 +132,7 @@
                 </div>
             </div>
 
+            <!-- ÚROVEŇ ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -147,17 +160,20 @@
             </div>
         </div>
 
+        <!-- Záložka Knižnica -->
         <div id="library" style="display:none;"> 
             <h2>Knižnica</h2> 
             <div class="card">Interná encyklopédia INNO</div> 
             <div class="card">Zoznam odporúčanej literatúry</div> 
         </div>
         
+        <!-- Záložka HR -->
         <div id="hr" style="display:none;"> 
             <h2>HR sekcia</h2> 
             <div class="card">Mzdy 🔒</div> 
         </div>
         
+        <!-- Záložka Admin panel -->
         <div id="admin" style="display:none;"> 
             <h2>Admin panel - Správa rolí</h2> 
             <div id="users"></div> 
@@ -166,7 +182,7 @@
 </div>
 
 <script>
-/* 🔥 FIREBASE CONFIG */
+/* 🔥 KONFIGURÁCIA FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
     authDomain: "inno-intranet.firebaseapp.com",
@@ -177,18 +193,21 @@ const firebaseConfig = {
     measurementId: "G-S9RGDS938Y"
 };
 
+// Inicializácia služieb Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
 
-// SLEDOVANIE STAVU PRIHLÁSENIA
+/* 🔄 SLEDOVANIE STAVU PRIHLÁSENIA POUŽÍVATEĽA */
 auth.onAuthStateChanged(async (user) => {
     if (user) {
+        // Používateľ je úspešne prihlásený cez Firebase Auth, ideme získať jeho rolu z databázy users
         const username = user.email.split("@")[0].toLowerCase();
         let doc = await db.collection("users").doc(username).get();
         
         if (!doc.exists) {
+            // Poistka: Ak neexistuje dokument podľa ID, skúsime vyhľadať podľa poľa email
             const snap = await db.collection("users").where("email", "==", user.email.toLowerCase()).get();
             if (!snap.empty) {
                 doc = snap.docs[0];
@@ -196,6 +215,7 @@ auth.onAuthStateChanged(async (user) => {
         }
         
         if (doc.exists) {
+            // Profil sa našiel, uložíme dáta a prepneme obrazovku do aplikácie
             currentUser = doc.data();
             currentUser.docId = doc.id;
             currentUser.email = user.email.toLowerCase();
@@ -213,11 +233,13 @@ auth.onAuthStateChanged(async (user) => {
             logout();
         }
     } else {
+        // Používateľ nie je prihlásený, zobrazíme prihlasovací formulár
         document.getElementById("login").style.display = "flex";
         document.getElementById("app").style.display = "none";
     }
 });
 
+/* 🔑 FUNKCIA PRE PRIHLÁSENIE */
 function login() {
     const email = document.getElementById("email").value.trim(); 
     const password = document.getElementById("password").value;
@@ -228,10 +250,16 @@ function login() {
     }
 
     auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert("Chyba prihlásenia: " + err.message));
+    .then((userCredential) => {
+        // Úspešne overené, stav spracuje onAuthStateChanged vyššie
+        console.log("Úspešné autentifikovanie vo Firebase!");
+    })
+    .catch(err => {
+        alert("Chyba prihlásenia: " + err.message);
+    });
 }
 
-/* ROLY A VZHĽAD */
+/* 👥 DETEKCIA ROLÍ A RENDER FORMULÁROV pre ADMINA / HR */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
@@ -260,6 +288,7 @@ function applyRoleVisibility() {
         }
     });
 
+    // Ak je rola obyčajný user, skryjeme pridávacie formuláre a nedostupné záložky
     if (currentUser && currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
@@ -270,65 +299,7 @@ function applyRoleVisibility() {
     }
 }
 
-/* 🧠 AUTOMATICKÁ EXTRAKCIA NÁZVU A PRÍPONY Z ODKAZU */
-function autoExtractFileName(catL1, catL2) {
-    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
-    
-    if (!urlInput || !nameInput) return;
-    
-    let urlText = urlInput.value.trim();
-    if (!urlText) return;
-
-    try {
-        let decodedName = "";
-
-        // Pokus č. 1: Hľadáme názov v parametri "file=" alebo "id=" (bežné pre OneDrive/SharePoint)
-        const urlObj = new URL(urlText);
-        const params = new URLSearchParams(urlObj.search);
-        
-        if (params.has("file")) {
-            decodedName = params.get("file");
-        } else if (params.has("id")) {
-            const idParam = params.get("id");
-            decodedName = idParam.substring(idParam.lastIndexOf('/') + 1);
-        }
-
-        // Pokus č. 2: Čistý názov z konca URL cesty pred otáznikom
-        if (!decodedName) {
-            const pathname = urlObj.pathname;
-            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
-            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
-                decodedName = decodeURIComponent(lastPart);
-            }
-        }
-
-        // Ak sme úspešne vygenerovali názov, vyčistíme ho a zapíšeme
-        if (decodedName) {
-            if (decodedName.includes("?")) {
-                decodedName = decodedName.split("?")[0];
-            }
-            nameInput.value = decodedName;
-        }
-    } catch (e) {
-        // Ignorujeme, kým odkaz nie je kompletný
-    }
-}
-
-function show(id) { 
-    document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
-    document.getElementById(id).style.display = "block";
-}
-
-function toggleAccordion(id) {
-    const container = document.getElementById(id);
-    const arrow = document.getElementById("arrow-" + id);
-    const isVisible = container.style.display === "block";
-    container.style.display = isVisible ? "none" : "block";
-    arrow.innerText = isVisible ? "▼" : "▲";
-}
-
-/* 📥 NAČÍTANIE DOKUMENTOV */
+/* 📥 REÁLNE NAČÍTAVANIE DOKUMENTOV Z DATABÁZE FIRESTORE */
 async function loadDocuments() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     const isHr = (currentUser && currentUser.role === 'hr');
@@ -394,7 +365,7 @@ async function loadDocuments() {
     });
 }
 
-/* 👁️ POTVRDENIE PREČÍTANIA */
+/* 👁️ ZÁPIS POTVRDENIA O PREČÍTANÍ (Read & Understood) */
 async function confirmRead(docId, docName) {
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli a beriete ho na vedomie?`)) return;
 
@@ -418,7 +389,7 @@ async function confirmRead(docId, docName) {
     }
 }
 
-/* 📊 HISTÓRIA PREČÍTANIA */
+/* 📊 HISTÓRIA PREČÍTANIA PRE ADMINA */
 function loadDocumentHistory(docId) {
     db.collection("logs")
       .where("docId", "==", docId)
@@ -448,14 +419,7 @@ function loadDocumentHistory(docId) {
       });
 }
 
-function toggleHistoryVisibility(docId) {
-    const box = document.getElementById(`history-box-${docId}`);
-    if (box) {
-        box.style.display = box.style.display === "block" ? "none" : "block";
-    }
-}
-
-/* 📤 PRIDANIE ODKAZU */
+/* 📤 PRIDANIE NOVÉHO DOKUMENTU DO DATABÁZY */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
@@ -488,7 +452,7 @@ async function addDocumentLink(event, catL1, catL2) {
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
-        alert("Dokument bol úspešne pridaný!");
+        alert("Dokument bol úspešne pridaný do intranetu!");
         nameInput.value = "";
         urlInput.value = "";
     } catch (error) {
@@ -496,7 +460,7 @@ async function addDocumentLink(event, catL1, catL2) {
     }
 }
 
-/* ❌ VYMAZANIE ODKAZU */
+/* ❌ VYMAZANIE DOKUMENTU */
 async function deleteDocument(docId) {
     if (!confirm("Naozaj chcete tento odkaz vymazať?")) return;
     try {
@@ -506,3 +470,115 @@ async function deleteDocument(docId) {
         alert("Chyba pri mazaní: " + error.message);
     }
 }
+
+/* 🛠️ POMOCNÉ FUNKCIE PRE CHOD STRÁNKY */
+function show(id) { 
+    document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
+    document.getElementById(id).style.display = "block";
+}
+
+function toggleAccordion(id) {
+    const container = document.getElementById(id);
+    const arrow = document.getElementById("arrow-" + id);
+    const isVisible = container.style.display === "block";
+    container.style.display = isVisible ? "none" : "block";
+    arrow.innerText = isVisible ? "▼" : "▲";
+}
+
+function toggleHistoryVisibility(docId) {
+    const box = document.getElementById(`history-box-${docId}`);
+    if (box) {
+        box.style.display = box.style.display === "block" ? "none" : "block";
+    }
+}
+
+/* ADMIN PANEL - NAČÍTANIE POUŽÍVATEĽOV A ZMENA ROLÍ */
+async function loadAdmin() {
+    if (!currentUser || currentUser.role !== "admin") return;
+    const snap = await db.collection("users").get();
+    let html = "";
+    snap.forEach(doc => { 
+        const u = doc.data();
+        const docId = doc.id;
+        html += `
+        <div class="admin-user-card"> 
+            <div><b>${u.name || 'Nepomenovaný užívateľ'}</b><br>${u.email}</div>
+            <div>
+                <label>Rola: </label>
+                <select onchange="updateUserRole('${docId}', this.value)">
+                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                    <option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option>
+                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+            </div>
+        </div> 
+        `; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
+
+async function updateUserRole(docId, newRole) {
+    try {
+        await db.collection("users").doc(docId).update({ role: newRole });
+        alert("Rola bola úspešne zmenená!");
+        if (docId === currentUser.docId) {
+            currentUser.role = newRole;
+            applyRoleVisibility();
+            if (newRole !== 'admin') show('dashboard');
+        }
+    } catch (error) {
+        alert("Chyba pri zmene roly: " + error.message);
+    }
+}
+
+function logout() { 
+    auth.signOut().then(() => { currentUser = null; location.reload(); });
+}
+
+/* 🧠 AUTOMATICKÁ EXTRAKCIA NÁZVU A PRÍPONY Z ODKAZU */
+function autoExtractFileName(catL1, catL2) {
+    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
+    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
+    
+    if (!urlInput || !nameInput) return;
+    
+    let urlText = urlInput.value.trim();
+    if (!urlText) return;
+
+    try {
+        let decodedName = "";
+
+        // Pokus č. 1: Vyčítanie z parametra "file=" alebo "id=" (typické pre OneDrive/SharePoint zdieľanie)
+        const urlObj = new URL(urlText);
+        const params = new URLSearchParams(urlObj.search);
+        
+        if (params.has("file")) {
+            decodedName = params.get("file");
+        } else if (params.has("id")) {
+            const idParam = params.get("id");
+            decodedName = idParam.substring(idParam.lastIndexOf('/') + 1);
+        }
+
+        // Pokus č. 2: Extrakcia z konca URL cesty (ak je tam priamy názov súboru)
+        if (!decodedName) {
+            const pathname = urlObj.pathname;
+            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
+            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
+                decodedName = decodeURIComponent(lastPart);
+            }
+        }
+
+        // Ak sme názov úspešne dekódovali, zapíšeme ho do políčka pre názov súboru
+        if (decodedName) {
+            if (decodedName.includes("?")) {
+                decodedName = decodedName.split("?")[0];
+            }
+            nameInput.value = decodedName;
+        }
+    } catch (e) {
+        // Tichá poistka: Kým odkaz nie je kompletný, neprerušujeme beh aplikácie
+    }
+}
+</script>
+</body>
+</html>
