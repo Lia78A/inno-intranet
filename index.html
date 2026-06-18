@@ -19,6 +19,12 @@
         .app { display: none; height: 100vh;}
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
         .content { margin-left: 240px; padding: 20px;}
+        
+        /* 🔥 NOVÝ ŠTÝL PRE PROFIL V SIDEBARE */
+        .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 10px 0 20px 0; font-size: 0.9em; border: 1px solid #1f2937;}
+        .sidebar-user-name { font-weight: bold; color: white; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .sidebar-user-role { color: #38bdf8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; display: inline-block;}
+
         .menu { padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;}
         .menu:hover { background: #1f2937;}
         .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
@@ -72,7 +78,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -82,10 +87,15 @@
     </div>
 </div>
 
-<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
-        <h3>INNO</h3>
+        <h3 style="margin-top: 0; margin-bottom: 5px;">INNO</h3>
+        
+        <div id="sidebar-user-box" class="sidebar-user-card">
+            <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
+            <div id="sidebar-user-role" class="sidebar-user-role">...</div>
+        </div>
+
         <div class="menu" onclick="show('dashboard')">Dashboard</div> 
         <div class="menu" onclick="show('docs')">Dokumenty</div> 
         <div class="menu" id="menu-library" onclick="show('library')">Knižnica</div> 
@@ -101,7 +111,6 @@
             <div class="card" id="welcome"></div> 
         </div>
         
-        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -126,7 +135,6 @@
             </div>
         </div>
 
-        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
@@ -135,7 +143,6 @@
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
-            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -143,7 +150,6 @@
                 <div class="doc-subcategory">
                     🔑 <b>Dokumenty s prideleným prístupom</b>
                     <div id="list-lib-private" class="doc-item-list"></div>
-                    <!-- 🔥 FIX: Kompletný duálny nahrávací box so sponkou a polom pre e-mail -->
                     <div id="zone-lib-private"></div>
                 </div>
             </div>
@@ -204,7 +210,13 @@ async function setupUserSession(emailStr) {
             
             document.getElementById("login").style.display = "none";
             document.getElementById("app").style.display = "block";
+            
+            // Zápis na Dashboard
             document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || emailStr) + " (" + currentUser.role + ")";
+            
+            // 🔥 ZÁPIS DO ĽAVÉHO HORNEHO ROHU (SIDEBAR) VŽDY VIDITEĽNÝ
+            document.getElementById("sidebar-user-name").innerText = currentUser.name || emailStr.split('@')[0];
+            document.getElementById("sidebar-user-role").innerText = currentUser.role;
             
             applyRoleVisibility();
             loadAdmin();
@@ -212,7 +224,7 @@ async function setupUserSession(emailStr) {
             loadLibrary();
             show('dashboard');
         } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba siete: " + e.message); }
+    } catch(e) { alert("Kritická chyba sieci: " + e.message); }
 }
 
 function applyRoleVisibility() {
@@ -239,7 +251,6 @@ function applyRoleVisibility() {
         }
     });
 
-    // 🔥 FIX: Generovanie plne vybaveného duálneho boxu pre Súkromný archív
     const zonePrivate = document.getElementById("zone-lib-private");
     if (zonePrivate) {
         if (currentUser && currentUser.role === "admin") {
@@ -335,7 +346,6 @@ async function addLibraryItem(event, folderType) {
         allowedUserEmail = accessInput.value.trim().toLowerCase();
     }
 
-    // Fyzický výber dokumentu z disku s extrakciou 100% presného názvu
     if (fileInput && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         finalName = file.name;
