@@ -7,13 +7,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <style>
         body { margin: 0; font-family: Arial; background: #0f172a; color: white;}
         /* LOGIN */
         .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
         .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
+        input, select { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
         button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
         button:hover { background: #1d4ed8; }
         /* APP */
@@ -27,7 +26,7 @@
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
 
-        /* ŠTÝLY PRE DOKUMENTY & ACCORDION */
+        /* ŠTÝLY PRE DOKUMENTY */
         .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
         .doc-category:hover { background: #334155; }
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
@@ -38,11 +37,9 @@
         .doc-item a:hover { text-decoration: underline; }
         .delete-btn { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;}
         .delete-btn:hover { background: #dc2626; }
-
-        /* DRAG & DROP ZÓNA */
-        .drop-zone { background: rgba(37, 99, 235, 0.05); border: 2px dashed #475569; border-radius: 6px; padding: 12px; text-align: center; color: #94a3b8; font-size: 0.85em; cursor: pointer; margin-top: 10px; transition: all 0.2s ease;}
-        .drop-zone:hover, .drop-zone.dragover { background: rgba(37, 99, 235, 0.15); border-color: #2563eb; color: white; }
-        .drop-zone input[type="file"] { display: none; }
+        
+        /* FORMULÁR NA LINKY */
+        .add-link-box { background: #1e293b; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #334155;}
     </style>
 </head>
 <body>
@@ -162,7 +159,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 let currentUser = null;
 
 // SLEDOVANIE STAVU PRIHLÁSENIA
@@ -206,61 +202,33 @@ function login() {
     auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
 }
 
-/* ROLY A VIDITEĽNOSŤ ZÓN */
+/* ROLY A VIDITEĽNOSŤ ZÓN PRIDÁVANIA */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    // Boxy na nahrávanie vygenerujeme VŽDY, aby sme ich videli
+    // Vygenerujeme formuláre pre pridávanie odkazov
     document.querySelectorAll(".admin-upload-zone").forEach(zone => {
         const l1 = zone.getAttribute("data-l1");
         const l2 = zone.getAttribute("data-l2");
-        const uniqueId = `file-${l1}-${l2}`;
         
         zone.innerHTML = `
-            <div class="drop-zone" onclick="document.getElementById('${uniqueId}').click()" id="zone-${l1}-${l2}">
-                ➕ Potiahni sem súbor alebo klikni pre pridanie do sekcie ${l2}
-                <input type="file" id="${uniqueId}" onchange="handleFileSelect('${l1}', '${l2}', this.files)">
+            <div class="add-link-box">
+                <input type="text" id="name-${l1}-${l2}" placeholder="Názov dokumentu (napr. Smernica BOZP)">
+                <input type="text" id="url-${l1}-${l2}" placeholder="Odkaz/URL na dokument (Google disk...)">
+                <button onclick="addDocumentLink('${l1}', '${l2}')" style="padding: 5px; font-size: 0.85em; margin-top: 0;">➕ Pridať odkaz</button>
             </div>
         `;
-        setupDragAndDrop(l1, l2);
     });
 
     if (currentUser && currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
+        document.querySelectorAll(".admin-upload-zone").forEach(z => z.innerHTML = ""); // Bežný user nepridáva nič
     }
     if (currentUser && currentUser.role === "hr") { 
         document.getElementById("menu-admin").style.display = "none"; 
     }
-}
-
-/* NASTAVENIE DRAG & DROP UDALOSTÍ */
-function setupDragAndDrop(l1, l2) {
-    setTimeout(() => {
-        const dropZone = document.getElementById(`zone-${l1}-${l2}`);
-        if (!dropZone) return;
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-            }, false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFileSelect(l1, l2, files);
-        }, false);
-    }, 100);
 }
 
 /* PREPÍNANIE ZÁLOŽIEK */
@@ -278,7 +246,7 @@ function toggleAccordion(id) {
     arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-/* 📥 NAČÍTANIE DOKUMENTOV */
+/* 📥 NAČÍTANIE DOKUMENTOV Z FIRESTORE */
 function loadDocuments() {
     db.collection("documents").onSnapshot((snapshot) => {
         document.querySelectorAll(".doc-item-list").forEach(list => list.innerHTML = "");
@@ -294,7 +262,7 @@ function loadDocuments() {
                 const itemHtml = `
                     <div class="doc-item">
                         <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
-                        ${showDelete ? `<button class="delete-btn" onclick="deleteDocument('${id}', '${data.storagePath}')">Zmazať</button>` : ''}
+                        ${showDelete ? `<button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>` : ''}
                     </div>
                 `;
                 targetList.innerHTML += itemHtml;
@@ -303,48 +271,47 @@ function loadDocuments() {
     });
 }
 
-/* 📤 SPRACOVANIE A NAHRATIE SÚBORU */
-async function handleFileSelect(catL1, catL2, files) {
-    if (files.length === 0) return;
-    const file = files[0];
+/* 📤 FUNKCIA: PRIDANIE ODKAZU DO FIRESTORE */
+async function addDocumentLink(catL1, catL2) {
+    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
+    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
     
-    const storagePath = `documents/${catL1}/${file.name}`;
-    const storageRef = storage.ref(storagePath);
+    const name = nameInput.value.trim();
+    let url = urlInput.value.trim();
+
+    if (!name || !url) {
+        alert("Prosím, vyplň názov aj odkaz.");
+        return;
+    }
+
+    // Automaticky pridáme https:// ak chýba
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
 
     try {
-        const zoneElement = document.getElementById(`zone-${catL1}-${catL2}`);
-        zoneElement.innerText = "⏳ Nahrávam súbor...";
-
-        // 1. Storage upload
-        const snapshot = await storageRef.put(file);
-        // 2. URL link
-        const fileUrl = await snapshot.ref.getDownloadURL();
-
-        // 3. Firestore zápis
         await db.collection("documents").add({
-            fileName: file.name,
-            fileUrl: fileUrl,
+            fileName: name,
+            fileUrl: url,
             categoryL1: catL1,
             categoryL2: catL2,
-            storagePath: storagePath,
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
-        alert(`Súbor "${file.name}" bol úspešne pridaný do sekcie ${catL2}!`);
+        alert("Odkaz na dokument bol úspešne pridaný!");
+        nameInput.value = "";
+        urlInput.value = "";
     } catch (error) {
-        alert("Chyba pri nahrávaní: " + error.message);
-    } finally {
-        applyRoleVisibility(); // Resetuje vzhľad zón späť na pôvodný text
+        alert("Chyba pri ukladaní odkazu: " + error.message);
     }
 }
 
-/* ❌ VYMAZANIE DOKUMENTU */
-async function deleteDocument(docId, storagePath) {
-    if (!confirm("Naozaj chcete tento dokument vymazať?")) return;
+/* ❌ VYMAZANIE ODKAZU */
+async function deleteDocument(docId) {
+    if (!confirm("Naozaj chcete tento odkaz vymazať?")) return;
     try {
-        await storage.ref(storagePath).delete();
         await db.collection("documents").doc(docId).delete();
-        alert("Dokument bol vymazaný.");
+        alert("Odkaz bol vymazaný.");
     } catch (error) {
         alert("Chyba pri mazaní: " + error.message);
     }
