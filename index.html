@@ -301,7 +301,7 @@ async function loadDocuments() {
     });
 }
 
-/* 📥 POKROČILÁ EXTRAKCIA REÁLNEHO NÁZVU SÚBORU */
+/* 📥 AGRESÍVNA EXTRAKCIA REÁLNEHO NÁZVU SÚBORU */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
@@ -312,20 +312,28 @@ async function addDocumentLink(event, catL1, catL2) {
     if (!url.startsWith("http://") && !url.startsWith("https://")) { url = "https://" + url; }
 
     let finalName = "";
+    let detectedExt = "";
+
+    // Predbežná detekcia koncovky z celého odkazu pre poistku automatického doplnenia
+    const extList = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
+    for (let ext of extList) {
+        if (url.toLowerCase().includes(ext)) {
+            detectedExt = ext;
+            break;
+        }
+    }
+
     try {
-        // Skúsime dekódovať celú URL pre prípad, že je názov schovaný hlbšie v texte
         let decodedUrl = decodeURIComponent(url);
         const urlObj = new URL(url);
         const params = new URLSearchParams(urlObj.search);
         
-        // 1. Skúsime štandardné SharePoint parametre
         if (params.has("file")) { finalName = params.get("file"); } 
         else if (params.has("id")) {
             const idParam = params.get("id");
             finalName = idParam.substring(idParam.lastIndexOf('/') + 1);
         }
         
-        // 2. Ak nič, skúsime vytiahnuť názov priamo z cesty URL (pathname)
         if (!finalName) {
             const pathname = urlObj.pathname;
             const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
@@ -334,12 +342,9 @@ async function addDocumentLink(event, catL1, catL2) {
             }
         }
         
-        // 3. AGRESÍVNA DETEKCIA: Ak stále nemáme názov, pozrieme sa, či adresa neobsahuje typické prípony
         if (!finalName || !finalName.includes(".")) {
-            const extensions = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
-            for (let ext of extensions) {
+            for (let ext of extList) {
                 if (decodedUrl.toLowerCase().includes(ext)) {
-                    // Nájdeme kde prípona končí a skúsime vysekať text pred ňou po najbližšiu lomku
                     let endIndex = decodedUrl.toLowerCase().indexOf(ext) + ext.length;
                     let subStr = decodedUrl.substring(0, endIndex);
                     let lastSlash = subStr.lastIndexOf("/");
@@ -357,11 +362,18 @@ async function addDocumentLink(event, catL1, catL2) {
         if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
     } catch (e) {}
 
-    // Ak všetky pokusy zlyhajú kvôli anonymnému / zašifrovanému odkazu, vypýtame si názov od užívateľa
+    // Ak bol odkaz úplne zašifrovaný Microsoftom, vypýtame si čistý názov
     if (!finalName || !finalName.includes(".") || finalName.length < 4) {
-        let manualName = prompt("Microsoft v tomto type odkazu úplne schoval názov súboru.\n\nZadajte reálny názov súboru aj s príponou (napr. Pozv59.docx):");
+        let manualName = prompt("Microsoft v tomto type odkazu schoval názov súboru.\n\nZadajte iba čistý názov súboru (napr. Pozv59):");
         if (manualName && manualName.trim()) {
             finalName = manualName.trim();
+            
+            // AUTOMATICKÉ DOPLNENIE KONCOVKY: Ak užívateľ nenapísal koncovku ručne, kód ju sám prilepí na koniec podľa zisteného odkazu
+            if (!finalName.includes(".") && detectedExt) {
+                finalName += detectedExt;
+            } else if (!finalName.includes(".")) {
+                finalName += ".docx"; // Úplne najbežnejšia univerzálna koncovka, ak sa nezistila žiadna
+            }
         } else {
             alert("Pridanie zrušené. Súbor musí mať zadaný názov.");
             return;
@@ -436,12 +448,3 @@ async function loadAdmin() {
         const u = doc.data();
         html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
     });
-    document.getElementById("users").innerHTML = html;
-}
-async function updateUserRole(docId, newRole) {
-    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
-}
-function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
