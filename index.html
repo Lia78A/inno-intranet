@@ -17,13 +17,15 @@
         button:hover { background: #1d4ed8; }
         /* APP */
         .app { display: none; height: 100vh;}
-        .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
+        
+        /* 🔥 UPRAVENÝ SIDEBAR PRE VYSOKÚ STABILITU ELEMENTOV */
+        .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%; display: flex; flex-direction: column;}
         .content { margin-left: 240px; padding: 20px;}
         
-        /* 🔥 NOVÝ ŠTÝL PRE PROFIL V SIDEBARE */
-        .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 10px 0 20px 0; font-size: 0.9em; border: 1px solid #1f2937;}
-        .sidebar-user-name { font-weight: bold; color: white; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .sidebar-user-role { color: #38bdf8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; display: inline-block;}
+        /* ŠTÝL PRE PROFIL V SIDEBARE */
+        .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 10px 0 20px 0; font-size: 0.9em; border: 1px solid #334155; color: white; display: block !important;}
+        .sidebar-user-name { font-weight: bold; color: #ffffff !important; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;}
+        .sidebar-user-role { color: #38bdf8 !important; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; display: inline-block;}
 
         .menu { padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;}
         .menu:hover { background: #1f2937;}
@@ -89,7 +91,7 @@
 
 <div id="app" class="app">
     <div class="sidebar"> 
-        <h3 style="margin-top: 0; margin-bottom: 5px;">INNO</h3>
+        <h3 style="margin-top: 0; margin-bottom: 5px; color: white;">INNO</h3>
         
         <div id="sidebar-user-box" class="sidebar-user-card">
             <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
@@ -168,7 +170,7 @@
 </div>
 
 <script>
-/* 🔥 INICIALIZÁCIA FIREBASE */
+/* INICIALIZÁCIA FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
     authDomain: "inno-intranet.firebaseapp.com",
@@ -214,9 +216,10 @@ async function setupUserSession(emailStr) {
             // Zápis na Dashboard
             document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || emailStr) + " (" + currentUser.role + ")";
             
-            // 🔥 ZÁPIS DO ĽAVÉHO HORNEHO ROHU (SIDEBAR) VŽDY VIDITEĽNÝ
-            document.getElementById("sidebar-user-name").innerText = currentUser.name || emailStr.split('@')[0];
-            document.getElementById("sidebar-user-role").innerText = currentUser.role;
+            // 🔥 ROBUSTNÝ VYNÚTENÝ ZÁPIS CEZ innerHTML PRE MAXIMÁLNU ISTOTU
+            const finalName = currentUser.name || emailStr.split('@')[0];
+            document.getElementById("sidebar-user-name").innerHTML = finalName;
+            document.getElementById("sidebar-user-role").innerHTML = currentUser.role;
             
             applyRoleVisibility();
             loadAdmin();
@@ -224,7 +227,7 @@ async function setupUserSession(emailStr) {
             loadLibrary();
             show('dashboard');
         } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba sieci: " + e.message); }
+    } catch(e) { alert("Kritická chyba siete: " + e.message); }
 }
 
 function applyRoleVisibility() {
@@ -529,17 +532,4 @@ async function loadAdmin() {
     if (!currentUser || currentUser.role !== "admin") return;
     const snap = await db.collection("users").get();
     let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
-async function updateUserRole(docId, newRole) {
-    if (!currentUser || currentUser.role !== "admin") return;
-    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) {}
-}
-function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
+    snap.forEach(doc =>
