@@ -300,7 +300,12 @@ async function loadDocuments() {
         snapshot.forEach((doc) => {
             const data = doc.data();
             const id = doc.id;
-            const targetListId = `list-${data.categoryL1.toLowerCase()}-${data.categoryL2.toLowerCase()}`;
+            
+            // OPRAVA FILTRA: premeníme kategórie z databázy vždy na malé písmená pre HTML priradenie
+            const catL1Clean = data.categoryL1.toLowerCase();
+            const catL2Clean = data.categoryL2.toLowerCase();
+            
+            const targetListId = `list-${catL1Clean}-${catL2Clean}`;
             const targetList = document.getElementById(targetListId);
 
             if (targetList) {
@@ -426,8 +431,8 @@ async function addDocumentLink(event, catL1, catL2) {
         await db.collection("documents").add({
             fileName: name,
             fileUrl: url,
-            categoryL1: catL1.toUpperCase(),
-            categoryL2: catL2.toLowerCase(),
+            categoryL1: catL1, // Zmena: Ukladáme čisto tak, ako to prichádza
+            categoryL2: catL2,
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
