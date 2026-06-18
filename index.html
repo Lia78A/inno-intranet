@@ -301,9 +301,9 @@ async function loadDocuments() {
             const data = doc.data();
             const id = doc.id;
             
-            // OPRAVA FILTRA: premeníme kategórie z databázy vždy na malé písmená pre HTML priradenie
-            const catL1Clean = data.categoryL1.toLowerCase();
-            const catL2Clean = data.categoryL2.toLowerCase();
+            // Definitívne ošetrenie: Všetko na malé písmená pre 100% presnú identifikáciu ID elementu
+            const catL1Clean = data.categoryL1.toString().toLowerCase();
+            const catL2Clean = data.categoryL2.toString().toLowerCase();
             
             const targetListId = `list-${catL1Clean}-${catL2Clean}`;
             const targetList = document.getElementById(targetListId);
@@ -431,8 +431,8 @@ async function addDocumentLink(event, catL1, catL2) {
         await db.collection("documents").add({
             fileName: name,
             fileUrl: url,
-            categoryL1: catL1, // Zmena: Ukladáme čisto tak, ako to prichádza
-            categoryL2: catL2,
+            categoryL1: catL1.toLowerCase(), // Ukladáme čisto malými písmenami pre perfektnú synchronizáciu
+            categoryL2: catL2.toLowerCase(),
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
