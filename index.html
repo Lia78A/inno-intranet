@@ -65,7 +65,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -75,7 +74,6 @@
     </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -93,11 +91,9 @@
             <div class="card" id="welcome"></div> 
         </div>
         
-        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
-            <!-- ÚROVEŇ 1: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -124,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- ÚROVEŇ 1: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -236,7 +231,7 @@ function login() {
     .catch(err => alert("Chyba prihlásenia: " + err.message));
 }
 
-/* ROLY A VZHLAD */
+/* ROLY A VZHĽAD */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
@@ -245,11 +240,12 @@ function applyRoleVisibility() {
         const l1 = zone.getAttribute("data-l1");
         const l2 = zone.getAttribute("data-l2");
         
+        // Zmena: ID vstupov sú teraz čisto textové bez pomlčiek, ktoré robili problémy
         zone.innerHTML = `
             <div class="add-link-box">
-                <input type="text" id="name-${l1}-${l2}" placeholder="Názov dokumentu...">
-                <input type="text" id="url-${l1}-${l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
-                <button onclick="addDocumentLink('${l1}', '${l2}')">➕ Pridať</button>
+                <input type="text" id="name${l1}${l2}" placeholder="Názov dokumentu...">
+                <input type="text" id="url${l1}${l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
+                <button type="button" onclick="addDocumentLink('${l1}', '${l2}')">➕ Pridať</button>
             </div>
         `;
     });
@@ -394,9 +390,15 @@ function toggleHistoryVisibility(docId) {
 
 /* 📤 PRIDANIE ODKAZU */
 async function addDocumentLink(catL1, catL2) {
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
-    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
+    // Opravené smerovanie na vstupy
+    const nameInput = document.getElementById(`name${catL1}${catL2}`);
+    const urlInput = document.getElementById(`url${catL1}${catL2}`);
     
+    if(!nameInput || !urlInput) {
+        alert("Systémová chyba: Vstupné polia neboli nájdené.");
+        return;
+    }
+
     const name = nameInput.value.trim();
     let url = urlInput.value.trim();
 
