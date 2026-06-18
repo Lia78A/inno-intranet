@@ -94,16 +94,26 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
 
-// SLEDOVANIE STAVU PRIHLÁSENIA (Spustí sa samo pri načítaní stránky)
+// SLEDOVANIE STAVU PRIHLÁSENIA
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // Používateľ je prihlásený, načítame dáta z Firestore podľa e-mailu
-        const userDocId = user.email.split("@")[0];
-        const doc = await db.collection("users").doc(userDocId).get();
+        // Zoberieme text pred zavináčom a dáme ho na malé písmená (napr. "lia")
+        const username = user.email.split("@")[0].toLowerCase();
+        
+        // Overíme obidve možnosti: hľadáme dokument s názvom "admin"/"hr" alebo priamo hľadáme podľa poľa email
+        let doc = await db.collection("users").doc(username).get();
+        
+        // Ak nenašlo podľa mena, skúsime vyhľadať podľa presného e-mailu
+        if (!doc.exists) {
+            const snap = await db.collection("users").where("email", "==", user.email.toLowerCase()).get();
+            if (!snap.empty) {
+                doc = snap.docs[0];
+            }
+        }
         
         if (doc.exists) {
             currentUser = doc.data();
-            currentUser.docId = userDocId; // Uložíme si ID dokumentu pre neskoršie úpravy
+            currentUser.docId = doc.id;
             
             document.getElementById("login").style.display = "none";
             document.getElementById("app").style.display = "block";
@@ -112,13 +122,12 @@ auth.onAuthStateChanged(async (user) => {
             
             applyRoleVisibility();
             loadAdmin();
-            show('dashboard'); // Predvolene zobrazíme Dashboard
+            show('dashboard');
         } else {
-            alert("Váš účet nemá vytvorený profil v databáze Firestore!");
+            alert("V databáze Firestore sa nenašiel dokument pre: " + username + " ani pre email " + user.email);
             logout();
         }
     } else {
-        // Používateľ nie je prihlásený, zobrazíme login
         document.getElementById("login").style.display = "flex";
         document.getElementById("app").style.display = "none";
     }
@@ -126,20 +135,18 @@ auth.onAuthStateChanged(async (user) => {
 
 /* LOGIN FUNCTION */
 function login() {
-    const email = document.getElementById("email").value; 
+    const email = document.getElementById("email").value.trim(); 
     const password = document.getElementById("password").value;
     
     auth.signInWithEmailAndPassword(email, password)
     .catch(err => alert(err.message));
 }
 
-/* ROLY A VIPÍNANIE V SIDEBARE */
+/* ROLY A VIDITEĽNOSŤ V SIDEBARE */
 function applyRoleVisibility() {
-    // Najprv zobrazíme všetko
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    // Skryjeme položky na základe role
     if (currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
@@ -164,7 +171,7 @@ async function loadAdmin() {
     
     snap.forEach(doc => { 
         const u = doc.data();
-        const docId = doc.id; // Potrebujeme pre úpravu roly
+        const docId = doc.id;
         
         html += `
         <div class="admin-user-card"> 
@@ -194,7 +201,6 @@ async function updateUserRole(docId, newRole) {
         });
         alert("Rola bola úspešne zmenená!");
         
-        // Ak admin zmenil rolu sám sebe, hneď aktualizujeme zobrazenie
         if (docId === currentUser.docId) {
             currentUser.role = newRole;
             applyRoleVisibility();
