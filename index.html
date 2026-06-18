@@ -52,13 +52,11 @@
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
-        .add-link-form-container { background: #1e293b; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; display: flex; flex-direction: column; gap: 8px; }
-        .add-link-row-inputs { display: flex; gap: 8px; width: 100%; }
-        .add-link-row-inputs input { margin: 0; height: 36px; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; background: #334155; color: white; border: none; box-sizing: border-box; }
-        .add-link-row-inputs input.url-field { flex: 2; } 
-        .add-link-row-inputs input.name-field { flex: 1; } 
-        .add-link-form-container button { width: 100%; margin: 0; height: 36px; font-size: 0.85em; font-weight: bold; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
-        .add-link-form-container button:hover { background: #059669; }
+        /* FORMULÁR MÁ UŽ IBA JEDNO ČISTÉ POLE PRE ODKAZ */
+        .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
+        .add-link-box input.url-field { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
+        .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
+        .add-link-box button:hover { background: #059669; }
     </style>
 </head>
 <body>
@@ -164,7 +162,7 @@
 </div>
 
 <script>
-/* 🔥 INICIALIZÁCIA FIREBASE */
+/* 🔥 INITIALIZÁCIA FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
     authDomain: "inno-intranet.firebaseapp.com",
@@ -187,9 +185,7 @@ auth.onAuthStateChanged(async (user) => {
         
         if (!doc.exists) {
             const snap = await db.collection("users").where("email", "==", user.email.toLowerCase()).get();
-            if (!snap.empty) {
-                doc = snap.docs[0];
-            }
+            if (!snap.empty) { doc = snap.docs[0]; }
         }
         
         if (doc.exists) {
@@ -234,13 +230,11 @@ function applyRoleVisibility() {
     categories.forEach(cat => {
         const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
         if (zone) {
+            // ODSTRÁNENÉ: Políčko pre názov bolo kompletne zmazané z formulára
             zone.innerHTML = `
-                <div class="add-link-form-container">
-                    <div class="add-link-row-inputs">
-                        <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Prilep odkaz zo SharePointu / OneDrive..." oninput="runExtraction('${cat.l1}', '${cat.l2}')">
-                        <input type="text" id="name-${cat.l1}-${cat.l2}" class="name-field" placeholder="Názov súboru...">
-                    </div>
-                    <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať dokument do systému</button>
+                <div class="add-link-box">
+                    <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Prilep odkaz zo SharePointu / OneDrive...">
+                    <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
                 </div>
             `;
         }
@@ -309,76 +303,59 @@ async function loadDocuments() {
     });
 }
 
-/* 📥 LOGIKA UKLADANIA: TU BERIEME TO, ČO JE V POLÍČKU REALNE NAPÍSANÉ */
+/* 📤 PLNE AUTOMATICKÉ UKLADANIE: Kód sám vygeneruje pekné názvy kategórií */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    
     let url = urlInput.value.trim();
-    let name = nameInput.value.trim(); // Vytiahneme presný text, ktorý vidíš v políčku názvu
 
     if (!url) { alert("Prosím, vlož odkaz zo SharePointu / OneDrive."); return; }
-
-    // 🔥 KĽÚČOVÁ ZMENA: Ak systém zlyhal a políčko názvu zostalo prázdne, až vtedy hodíme dátum
-    if (!name) {
-        name = "Dokument_" + new Date().toLocaleDateString("sk-SK");
-    }
-
     if (!url.startsWith("http://") && !url.startsWith("https://")) { url = "https://" + url; }
+
+    // 🧠 AUTOMATICKÝ REŽIM: Pokus o analýzu názvu
+    let finalName = "";
+    try {
+        const urlObj = new URL(url);
+        const params = new URLSearchParams(urlObj.search);
+        if (params.has("file")) { finalName = params.get("file"); } 
+        else if (params.has("id")) {
+            const idParam = params.get("id");
+            finalName = idParam.substring(idParam.lastIndexOf('/') + 1);
+        }
+        if (!finalName) {
+            const pathname = urlObj.pathname;
+            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
+            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
+                finalName = decodeURIComponent(lastPart);
+            }
+        }
+        if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
+    } catch (e) {}
+
+    // ✨ KĽÚČOVÁ OPRAVA: Ak Microsoft schoval názov v odkaze, vygenerujeme čistý firemný názov podľa priečinka
+    if (!finalName) {
+        // Prvá kategória s veľkými písmenami (napr. ISO alebo ISMS)
+        const displayL1 = catL1.toUpperCase();
+        // Druhá kategória s veľkým prvým písmenom (napr. Politika, Ciele...)
+        const displayL2 = catL2.charAt(0).toUpperCase() + catL2.slice(1);
+        
+        finalName = `Dokument_${displayL1}_${displayL2}`;
+    }
 
     try {
         await db.collection("documents").add({
-            fileName: name, // Zapíšeme presne to, čo si ručne upravila/dopísala (napr. Pozv59.docx)
+            fileName: finalName, 
             fileUrl: url,
             categoryL1: catL1.toLowerCase(), 
             categoryL2: catL2.toLowerCase(),
             uploadedBy: currentUser.email
         });
 
-        alert("Uložené pod názvom: " + name);
-        nameInput.value = "";
+        alert("Úspešne pridané ako: " + finalName);
         urlInput.value = "";
     } catch (error) {
-        alert("Chyba databázy: " + error.message);
-    }
-}
-
-/* EXTRAKCIA NÁZVU NA POZADÍ (BEŽÍ NA POZUR") */
-function runExtraction(catL1, catL2) {
-    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
-    let urlText = urlInput.value.trim();
-    if (!urlText) { nameInput.value = ""; return; }
-
-    try {
-        let extracted = "";
-        const urlObj = new URL(urlText);
-        const params = new URLSearchParams(urlObj.search);
-        
-        if (params.has("file")) { extracted = params.get("file"); } 
-        else if (params.has("id")) {
-            const idParam = params.get("id");
-            extracted = idParam.substring(idParam.lastIndexOf('/') + 1);
-        }
-
-        if (!extracted) {
-            const pathname = urlObj.pathname;
-            const lastPart = pathname.substring(pathname.lastIndexOf('/') + 1);
-            if (lastPart && lastPart.includes(".") && !lastPart.startsWith("guestaccess")) {
-                extracted = decodeURIComponent(lastPart);
-            }
-        }
-
-        if (extracted) {
-            if (extracted.includes("?")) { extracted = extracted.split("?")[0]; }
-            nameInput.value = extracted;
-        } else {
-            nameInput.value = ""; // Ak Microsoft názov vymaže, necháme prázdno, aby si písala ty
-        }
-    } catch (e) {
-        nameInput.value = "";
+        alert("Chyba: " + error.message);
     }
 }
 
@@ -410,36 +387,3 @@ function loadDocumentHistory(docId) {
 }
 
 async function deleteDocument(docId) {
-    if (!confirm("Vymazať?")) return;
-    try { await db.collection("documents").doc(docId).delete(); alert("Vymazané."); } catch (e) { alert(e.message); }
-}
-
-function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
-function toggleAccordion(id) {
-    const container = document.getElementById(id);
-    const arrow = document.getElementById("arrow-" + id);
-    const isVisible = container.style.display === "block";
-    container.style.display = isVisible ? "none" : "block";
-    arrow.innerText = isVisible ? "▼" : "▲";
-}
-function toggleHistoryVisibility(docId) {
-    const box = document.getElementById(`history-box-${docId}`);
-    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
-}
-async function loadAdmin() {
-    if (!currentUser || currentUser.role !== "admin") return;
-    const snap = await db.collection("users").get();
-    let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
-async function updateUserRole(docId, newRole) {
-    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
-}
-function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
