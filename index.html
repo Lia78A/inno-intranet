@@ -23,13 +23,22 @@
         .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
+
+        /* ŠTÝLY PRE DOKUMENTY (ÚROVEŇ 1 a 2) */
+        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
+        .doc-category:hover { background: #334155; }
+        .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
+        .doc-subcategory { background: #1f2937; padding: 12px; margin: 5px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
+        .doc-item { background: #334155; padding: 8px; margin: 5px 0; border-radius: 6px; font-size: 0.9em; color: #cbd5e1; list-style-type: none;}
+        .doc-item a { color: #38bdf8; text-decoration: none; }
+        .doc-item a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div id="login" class="login"> 
     <div class="box"> 
-        <h2>INNO Login</h2>
+        <h2>INNO Login (v2)</h2>
         <input id="email" placeholder="email"> 
         <input id="password" type="password" placeholder="heslo">
         <button onclick="login()">Login</button> 
@@ -54,9 +63,52 @@
         </div>
         
         <div id="docs" style="display:none;"> 
-            <h2>Dokumenty</h2> 
-            <div class="card">GDPR smernica</div> 
-            <div class="card">BOZP smernica</div> 
+            <h2>Dokumentácia spoločnosti</h2> 
+            
+            <div class="doc-category" onclick="toggleAccordion('cat-iso')">
+                📁 Úroveň 1: ISO <span>▼</span>
+            </div>
+            <div id="cat-iso" class="doc-subcategory-container">
+                <div class="doc-subcategory">
+                    🔒 <b>Politika</b>
+                    <div class="doc-item">Nasadená ISO politika kvality.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    🎯 <b>Ciele</b>
+                    <div class="doc-item">Ročné ISO ciele pre rok 2026.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    📜 <b>Smernice</b>
+                    <div class="doc-item">Smernica pre riadenie kvality v1.2.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    📎 <b>Iné</b>
+                    <div class="doc-item">Záznamy z interných auditov.docx</div>
+                </div>
+            </div>
+
+            <div class="doc-category" onclick="toggleAccordion('cat-isms')">
+                📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span>▼</span>
+            </div>
+            <div id="cat-isms" class="doc-subcategory-container">
+                <div class="doc-subcategory">
+                    🔒 <b>Politika</b>
+                    <div class="doc-item">Bezpečnostná politika ISMS v3.0.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    🎯 <b>Ciele</b>
+                    <div class="doc-item">Ciele informačnej bezpečnosti INNO.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    📜 <b>Smernice</b>
+                    <div class="doc-item">Smernica pre prácu s citlivými údajmi.pdf</div>
+                    <div class="doc-item">Heslová politika a prístupy.pdf</div>
+                </div>
+                <div class="doc-subcategory">
+                    📎 <b>Iné</b>
+                    <div class="doc-item">Plán obnovy po havárii (Disaster Recovery).pdf</div>
+                </div>
+            </div>
         </div>
 
         <div id="library" style="display:none;"> 
@@ -97,13 +149,9 @@ let currentUser = null;
 // SLEDOVANIE STAVU PRIHLÁSENIA
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // Zoberieme text pred zavináčom a dáme ho na malé písmená (napr. "lia")
         const username = user.email.split("@")[0].toLowerCase();
-        
-        // Overíme obidve možnosti: hľadáme dokument s názvom "admin"/"hr" alebo priamo hľadáme podľa poľa email
         let doc = await db.collection("users").doc(username).get();
         
-        // Ak nenašlo podľa mena, skúsime vyhľadať podľa presného e-mailu
         if (!doc.exists) {
             const snap = await db.collection("users").where("email", "==", user.email.toLowerCase()).get();
             if (!snap.empty) {
@@ -124,7 +172,7 @@ auth.onAuthStateChanged(async (user) => {
             loadAdmin();
             show('dashboard');
         } else {
-            alert("V databáze Firestore sa nenašiel dokument pre: " + username + " ani pre email " + user.email);
+            alert("CHYBA: V databáze sa nenašiel profil pre e-mail: " + user.email);
             logout();
         }
     } else {
@@ -160,6 +208,18 @@ function applyRoleVisibility() {
 function show(id) { 
     document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
     document.getElementById(id).style.display = "block";
+}
+
+/* FUNKCIA PRE ROZBAĽOVANIE KATEGÓRIÍ (ACCORDION) */
+function toggleAccordion(id) {
+    const container = document.getElementById(id);
+    const isVisible = container.style.display === "block";
+    
+    // Zatvoríme prípadné iné otvorené kategórie (voliteľné, pre čistotu)
+    document.querySelectorAll(".doc-subcategory-container").forEach(c => c.style.display = "none");
+    
+    // Prepíname zobrazenie aktuálnej kategórie
+    container.style.display = isVisible ? "none" : "block";
 }
 
 /* ADMIN PANEL: NAČÍTANIE A SPRÁVA ROLÍ */
