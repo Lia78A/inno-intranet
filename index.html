@@ -52,6 +52,7 @@
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
+        /* FORMULÁR OBSAHUJE IBA JEDNO ČISTÉ POLE PRE ODKAZ */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
         .add-link-box input.url-field { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
         .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
@@ -301,7 +302,6 @@ async function loadDocuments() {
     });
 }
 
-/* 📥 AGRESÍVNA EXTRAKCIA REÁLNEHO NÁZVU SÚBORU */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
@@ -314,7 +314,6 @@ async function addDocumentLink(event, catL1, catL2) {
     let finalName = "";
     let detectedExt = "";
 
-    // Predbežná detekcia koncovky z celého odkazu pre poistku automatického doplnenia
     const extList = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
     for (let ext of extList) {
         if (url.toLowerCase().includes(ext)) {
@@ -362,17 +361,14 @@ async function addDocumentLink(event, catL1, catL2) {
         if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
     } catch (e) {}
 
-    // Ak bol odkaz úplne zašifrovaný Microsoftom, vypýtame si čistý názov
     if (!finalName || !finalName.includes(".") || finalName.length < 4) {
         let manualName = prompt("Microsoft v tomto type odkazu schoval názov súboru.\n\nZadajte iba čistý názov súboru (napr. Pozv59):");
         if (manualName && manualName.trim()) {
             finalName = manualName.trim();
-            
-            // AUTOMATICKÉ DOPLNENIE KONCOVKY: Ak užívateľ nenapísal koncovku ručne, kód ju sám prilepí na koniec podľa zisteného odkazu
             if (!finalName.includes(".") && detectedExt) {
                 finalName += detectedExt;
             } else if (!finalName.includes(".")) {
-                finalName += ".docx"; // Úplne najbežnejšia univerzálna koncovka, ak sa nezistila žiadna
+                finalName += ".docx"; 
             }
         } else {
             alert("Pridanie zrušené. Súbor musí mať zadaný názov.");
@@ -448,3 +444,12 @@ async function loadAdmin() {
         const u = doc.data();
         html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
     });
+    document.getElementById("users").innerHTML = html;
+}
+async function updateUserRole(docId, newRole) {
+    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
+}
+function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
