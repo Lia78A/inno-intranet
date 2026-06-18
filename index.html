@@ -52,7 +52,6 @@
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
 
-        /* FORMULÁR OBSAHUJE IBA JEDNO ČISTÉ POLE PRE ODKAZ */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
         .add-link-box input.url-field { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
         .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
@@ -162,7 +161,7 @@
 </div>
 
 <script>
-/* 🔥 INICIALIZÁCIA FIREBASE */
+/* 🔥 CONFIG CONFIGURÁCIA PRE FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
     authDomain: "inno-intranet.firebaseapp.com",
@@ -302,6 +301,7 @@ async function loadDocuments() {
     });
 }
 
+/* 📤 AUTOMATICKÁ EXTRAKCIA - BEZ PROMPTOV */
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
 
@@ -312,16 +312,6 @@ async function addDocumentLink(event, catL1, catL2) {
     if (!url.startsWith("http://") && !url.startsWith("https://")) { url = "https://" + url; }
 
     let finalName = "";
-    let detectedExt = "";
-
-    const extList = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
-    for (let ext of extList) {
-        if (url.toLowerCase().includes(ext)) {
-            detectedExt = ext;
-            break;
-        }
-    }
-
     try {
         let decodedUrl = decodeURIComponent(url);
         const urlObj = new URL(url);
@@ -342,6 +332,7 @@ async function addDocumentLink(event, catL1, catL2) {
         }
         
         if (!finalName || !finalName.includes(".")) {
+            const extList = [".docx", ".pdf", ".xlsx", ".xls", ".doc", ".pptx"];
             for (let ext of extList) {
                 if (decodedUrl.toLowerCase().includes(ext)) {
                     let endIndex = decodedUrl.toLowerCase().indexOf(ext) + ext.length;
@@ -361,19 +352,11 @@ async function addDocumentLink(event, catL1, catL2) {
         if (finalName && finalName.includes("?")) { finalName = finalName.split("?")[0]; }
     } catch (e) {}
 
-    if (!finalName || !finalName.includes(".") || finalName.length < 4) {
-        let manualName = prompt("Microsoft v tomto type odkazu schoval názov súboru.\n\nZadajte iba čistý názov súboru (napr. Pozv59):");
-        if (manualName && manualName.trim()) {
-            finalName = manualName.trim();
-            if (!finalName.includes(".") && detectedExt) {
-                finalName += detectedExt;
-            } else if (!finalName.includes(".")) {
-                finalName += ".docx"; 
-            }
-        } else {
-            alert("Pridanie zrušené. Súbor musí mať zadaný názov.");
-            return;
-        }
+    // ZMENA: Žiadny prompt! Ak Microsoft skryl názov v linku, systém vygeneruje pekné firemné meno podľa priečinka
+    if (!finalName || !finalName.includes(".")) {
+        const displayL1 = catL1.toUpperCase();
+        const displayL2 = catL2.charAt(0).toUpperCase() + catL2.slice(1);
+        finalName = `Súbor_${displayL1}_${displayL2}.docx`;
     }
 
     try {
@@ -394,3 +377,63 @@ async function addDocumentLink(event, catL1, catL2) {
 
 async function confirmRead(docId, docName) {
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli?`)) return;
+    const formattedDate = new Date().toLocaleString("sk-SK");
+    try {
+        await db.collection("logs").add({
+            docId: docId, docName: docName, userEmail: currentUser.email,
+            userName: currentUser.name || currentUser.email, timestamp: formattedDate, type: "Prečítané a Porozumené"
+        });
+        alert("Potvrdené.");
+        loadDocuments();
+    } catch (error) { alert(error.message); }
+}
+
+function loadDocumentHistory(docId) {
+    db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
+        const historyBox = document.getElementById(`history-box-${docId}`);
+        if (!historyBox) return;
+        if (snapshot.empty) { historyBox.innerHTML = "<i>Zatiaľ neprečítané.</i>"; return; }
+        let html = "<b>Prečítali:</b><br>";
+        snapshot.forEach(log => {
+            const l = log.data();
+            html += `<div class="history-row"><span>👤 <b>${l.userName}</b></span> <span>⏱️ ${l.timestamp}</span></div>`;
+        });
+        historyBox.innerHTML = html;
+    });
+}
+
+async function deleteDocument(docId) {
+    if (!confirm("Vymazať?")) return;
+    try { await db.collection("documents").doc(docId).delete(); alert("Vymazané."); } catch (e) { alert(e.message); }
+}
+
+// POMOCNÉ FUNKCIE NAVIGÁCIE
+function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
+function toggleAccordion(id) {
+    const container = document.getElementById(id);
+    const arrow = document.getElementById("arrow-" + id);
+    const isVisible = container.style.display === "block";
+    container.style.display = isVisible ? "none" : "block";
+    arrow.innerText = isVisible ? "▼" : "▲";
+}
+function toggleHistoryVisibility(docId) {
+    const box = document.getElementById(`history-box-${docId}`);
+    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
+}
+async function loadAdmin() {
+    if (!currentUser || currentUser.role !== "admin") return;
+    const snap = await db.collection("users").get();
+    let html = "";
+    snap.forEach(doc => { 
+        const u = doc.data();
+        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
+async function updateUserRole(docId, newRole) {
+    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
+}
+function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
