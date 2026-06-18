@@ -50,6 +50,10 @@
         .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .history-btn:hover { background: #0369a1; }
 
+        /* NOVÉ: Špeciálne štýlové tlačidlo pre externý preklik do firemného Nuclina */
+        .ext-link-btn { background: #0284c7; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75em; font-weight: bold; margin-left: auto; margin-right: 15px; display: inline-block; border: 1px solid #0ea5e9;}
+        .ext-link-btn:hover { background: #0369a1; }
+
         .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
         .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
         .history-row:last-child { border-bottom: none; }
@@ -68,6 +72,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -77,6 +82,7 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -94,6 +100,7 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -118,11 +125,16 @@
             </div>
         </div>
 
+        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
-            <div class="doc-category" onclick="toggleAccordion('cat-lib-nuclino')">
-                🌐 Úroveň 1: Nuclino (Všetci prístup) <span id="arrow-cat-lib-nuclino">▼</span>
+            <!-- 1. VEREJNÝ PRIEČINOK: NUCLINO (Pridaný priamy firemný odkaz) -->
+            <div class="doc-category" style="cursor: default;" onclick="handleCategoryClick(event, 'cat-lib-nuclino')">
+                🌐 <span>Úroveň 1: Nuclino (Všetci prístup)</span>
+                <!-- 🔥 NOVÉ: Tlačidlo, ktoré smeruje priamo na vaše firemné Nuclino login prostredie -->
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="ext-link-btn" onclick="event.stopPropagation();">Otvoriť firemné Nuclino ↗</a>
+                <span id="arrow-cat-lib-nuclino" style="cursor: pointer;">▼</span>
             </div>
             <div id="cat-lib-nuclino" class="doc-subcategory-container">
                 <div class="doc-subcategory">
@@ -132,8 +144,9 @@
                 </div>
             </div>
 
+            <!-- 2. SÚKROMNÝ PRIEČINOK: SÚKROMNÝ ARCHÍV -->
             <div class="doc-category" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
-                🔒 Úroveň 1: Súkromný archív (Riadený prístup) <span id="arrow-cat-lib-private">▼</span>
+                🔒 <span>Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
             <div id="cat-lib-private" class="doc-subcategory-container">
                 <div class="doc-subcategory">
@@ -204,17 +217,16 @@ async function setupUserSession(emailStr) {
             applyRoleVisibility();
             loadAdmin();
             loadDocuments();
-            loadLibrary(); // Spustenie načítania knižnice
+            loadLibrary();
             show('dashboard');
         } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba siete: " + e.message); }
+    } catch(e) { alert("Kritická chyba sietee: " + e.message); }
 }
 
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    // 1. GENERUJE FORMULÁRE PRE SEKCIU DOKUMENTY (LEN ADMIN)
     const docCategories = [
         { l1: "iso", l2: "politika" }, { l1: "iso", l2: "ciele" }, { l1: "iso", l2: "smernice" }, { l1: "iso", l2: "ine" },
         { l1: "isms", l2: "politika" }, { l1: "isms", l2: "ciele" }, { l1: "isms", l2: "smernice" }, { l1: "isms", l2: "ine" }
@@ -235,13 +247,12 @@ function applyRoleVisibility() {
         }
     });
 
-    // 2. GENERUJE FORMULÁRE PRE SEKCIU KNIŽNICA (PODĽA TVOJICH NOVÝCH PRAVIDIEL)
     const zoneNuclino = document.getElementById("zone-lib-nuclino");
     if (zoneNuclino) {
-        // VŠETCI (User, HR, Admin) môžu pridávať do Nuclina
+        // 🔥 VYLEPŠENÉ: Napovedajúci placeholder v nahrávacom boxe pre firemné Nuclino odkazy
         zoneNuclino.innerHTML = `
             <div class="add-link-box">
-                <input type="text" id="url-lib-nuclino" class="url-field" placeholder="Prilep odkaz pre Nuclino... ALEBO">
+                <input type="text" id="url-lib-nuclino" class="url-field" placeholder="Prilep odkaz z app.nuclino.com... ALEBO">
                 <label class="file-label" for="file-lib-nuclino">📎 Súbor z PC</label>
                 <input type="file" id="file-lib-nuclino" onchange="handleFileSelected('lib', 'nuclino')">
                 <button type="button" onclick="addLibraryItem(event, 'nuclino')">➕ Pridať do Nuclino</button>
@@ -252,7 +263,6 @@ function applyRoleVisibility() {
     const zonePrivate = document.getElementById("zone-lib-private");
     if (zonePrivate) {
         if (currentUser && currentUser.role === "admin") {
-            // IBA ADMIN vidí box pre Súkromný archív a políčko pre cieľový e-mail prístupu
             document.getElementById("folder-lib-private").style.display = "flex";
             zonePrivate.innerHTML = `
                 <div class="add-link-box">
@@ -278,7 +288,6 @@ function handleFileSelected(catL1, catL2) {
     }
 }
 
-/* 📚 SYSTÉM NAČÍTANIA INTERNEJ KNIŽNICE (NUCLINO A SÚKROMNÝ ARCHÍV) */
 function loadLibrary() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     const myEmail = currentUser ? currentUser.email.toLowerCase() : "";
@@ -299,9 +308,7 @@ function loadLibrary() {
             else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) fileIcon = "📗";
             else if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc")) fileIcon = "📘";
 
-            // Ak ide o verejnú zložku Nuclino
             if (data.folderType === "nuclino") {
-                // V Nucline môžu mazať a premenovávať všetci prístupní používatelia
                 document.getElementById("list-lib-nuclino").innerHTML += `
                     <div class="doc-item">
                         <a href="${data.fileUrl}" target="_blank"><span class="doc-icon">${fileIcon}</span> <span>${data.fileName}</span></a>
@@ -312,11 +319,9 @@ function loadLibrary() {
                     </div>
                 `;
             } 
-            // Ak ide o Súkromný archív riadený prístupom
             else if (data.folderType === "private") {
                 const allowedEmail = data.allowedUser ? data.allowedUser.toLowerCase().trim() : "";
                 
-                // Zobrazíme iba Adminovi ALEBO užívateľovi, ktorého e-mail sa presne zhoduje s povoleným
                 if (isAdmin || myEmail === allowedEmail) {
                     hasVisiblePrivateDocs = true;
                     
@@ -339,7 +344,6 @@ function loadLibrary() {
             }
         });
 
-        // 🔒 AK UŽÍVATEĽ MÁ SPRÍSTUPNENÝ SÚBOR, UKÁŽEME MU PRÍSLUŠNÝ PRIEČINOK NA PLOCHE
         if (isAdmin || hasVisiblePrivateDocs) {
             document.getElementById("folder-lib-private").style.display = "flex";
         } else {
@@ -348,7 +352,6 @@ function loadLibrary() {
     });
 }
 
-/* 📥 FUNKCIA PRIDÁVANIA DO KNIŽNICE */
 async function addLibraryItem(event, folderType) {
     if(event) event.preventDefault();
     
@@ -412,7 +415,6 @@ async function deleteLibraryItem(id) {
     try { await db.collection("library").doc(id).delete(); } catch(e) {}
 }
 
-/* 📄 SYSTÉM PRE SEKCIU DOKUMENTY */
 async function loadDocuments() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     let signedDocs = [];
@@ -460,7 +462,7 @@ async function loadDocuments() {
 
 async function addDocumentLink(event, catL1, catL2) {
     if(event) event.preventDefault();
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
     const fileInput = document.getElementById(`file-${catL1}-${catL2}`);
     let url = urlInput.value.trim();
@@ -491,7 +493,7 @@ async function addDocumentLink(event, catL1, catL2) {
 }
 
 async function renameDocument(docId, currentName) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     let newName = prompt("Zadajte nový názov:", currentName);
     if (newName && newName.trim() && newName.trim() !== currentName) {
         try { await db.collection("documents").doc(docId).update({ fileName: newName.trim() }); } catch (e) {}
@@ -499,6 +501,7 @@ async function renameDocument(docId, currentName) {
 }
 
 async function confirmRead(docId, docName) {
+    if (!currentUser) return;
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli?`)) return;
     const formattedDate = new Date().toLocaleString("sk-SK");
     try {
@@ -510,7 +513,7 @@ async function confirmRead(docId, docName) {
 }
 
 function loadDocumentHistory(docId) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
         const historyBox = document.getElementById(`history-box-${docId}`);
         if (!historyBox) return;
@@ -524,25 +527,35 @@ function loadDocumentHistory(docId) {
 }
 
 async function deleteDocument(docId) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     if (!confirm("Vymazať?")) return;
     try { await db.collection("documents").doc(docId).delete(); } catch (e) {}
 }
 
+/* 🧭 POMOCNÉ FUNKCIE ROZHRANIA */
 function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
+
+// Ochranná funkcia pre harmoniku, aby kliknutie na externý odkaz nezbalilo/nerozbalilo priečinok
+function handleCategoryClick(event, id) {
+    if (event.target.tagName.toLowerCase() !== 'a') {
+        toggleAccordion(id);
+    }
+}
+
 function toggleAccordion(id) {
     const container = document.getElementById(id);
     const arrow = document.getElementById("arrow-" + id);
     const isVisible = container.style.display === "block";
     container.style.display = isVisible ? "none" : "block";
-    arrow.innerText = isVisible ? "▼" : "▲";
+    if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
 }
+
 function toggleHistoryVisibility(docId) {
     const box = document.getElementById(`history-box-${docId}`);
     if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
 }
 async function loadAdmin() {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     const snap = await db.collection("users").get();
     let html = "";
     snap.forEach(doc => { 
@@ -552,7 +565,7 @@ async function loadAdmin() {
     document.getElementById("users").innerHTML = html;
 }
 async function updateUserRole(docId, newRole) {
-    if (currentUser?.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) {}
 }
 function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
