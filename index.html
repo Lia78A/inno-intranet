@@ -78,11 +78,15 @@
 </div>
 
 <script>
-/* 🔥 FIREBASE CONFIG (Doplň svoje údaje, ak ich prepíšeš) */
-const firebaseConfig = { 
-    apiKey: "YOUR_KEY", 
-    authDomain: "YOUR_DOMAIN", 
-    projectId: "YOUR_ID",
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
+    apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
+    authDomain: "inno-intranet.firebaseapp.com",
+    projectId: "inno-intranet",
+    storageBucket: "inno-intranet.firebasestorage.app",
+    messagingSenderId: "816972324613",
+    appId: "1:816972324613:web:81429910b0de1e4cbda16c",
+    measurementId: "G-S9RGDS938Y"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -129,7 +133,7 @@ function login() {
     .catch(err => alert(err.message));
 }
 
-/* ROLY A VIDITEĽNOSŤ V SIDEBARE */
+/* ROLY A VIPÍNANIE V SIDEBARE */
 function applyRoleVisibility() {
     // Najprv zobrazíme všetko
     document.getElementById("menu-admin").style.display = "block";
