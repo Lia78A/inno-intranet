@@ -2,313 +2,55 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INNO Firebase Intranet</title>
+    <title>INNO Firebase Intranet - Oprava</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white;}
-        /* LOGIN */
-        .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
-        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
-        input, select { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
-        button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
-        button:hover { background: #1d4ed8; }
-        /* APP */
-        .app { display: none; height: 100vh;}
-        
-        /* SIDEBAR S FIXNÝM DIZAJNOM PRE LOGO A VIZITKU */
-        .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%; display: flex; flex-direction: column;}
-        .content { margin-left: 240px; padding: 20px;}
-        
-        /* 🔥 ŠTÝL PRE MODERNÉ TRANSPARENTNÉ LOGO BEZ POZADIA */
-        .sidebar-logo-container { width: 100%; max-width: 160px; margin-bottom: 25px; display: block;}
-        .novis-logo-svg { width: 100%; height: auto; display: block;}
-
-        /* STABILNÝ PROFIL V SIDEBARE */
-        .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 5px 0 20px 0; font-size: 0.9em; border: 1px solid #334155; color: white; display: block !important;}
-        .sidebar-user-name { font-weight: bold; color: #ffffff !important; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;}
-        .sidebar-user-role { color: #38bdf8 !important; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; display: inline-block;}
-
-        .menu { padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;}
-        .menu:hover { background: #1f2937;}
-        .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
-        
-        .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
-        .admin-user-card select { width: auto; margin: 0; padding: 5px;}
-
-        /* ŠTÝLY PRE KATEGÓRIE A POLOŽKY */
-        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
-        .doc-category-clickable { cursor: pointer; }
-        .doc-category-clickable:hover { background: #334155; }
-        .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
-        .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
-        .doc-item-list { margin: 5px 0; padding-left: 0; }
-        
-        .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
-        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; flex: 1; }
-        .doc-item a:hover { text-decoration: underline; }
-        .doc-icon { font-size: 1.4em; } 
-        
-        .doc-actions { display: flex; gap: 8px; align-items: center; }
-        .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
-        .delete-btn:hover { background: #dc2626; }
-        .rename-btn { background: #4b5563; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
-        .rename-btn:hover { background: #374151; }
-        
-        .confirm-btn { background: #475569; color: #cbd5e1; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: bold;}
-        .confirm-btn:hover { background: #64748b; color: white; }
-        .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: 1px solid #10b981; }
-        .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
-        .history-btn:hover { background: #0369a1; }
-
-        .nuclino-go-link { color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 0.95em; padding: 4px 12px; border-radius: 6px; transition: background 0.2s;}
-        .nuclino-go-link:hover { background: rgba(56, 189, 248, 0.15); text-decoration: underline; }
-
-        .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
-        .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
-        .history-row:last-child { border-bottom: none; }
-
-        .add-link-box { display: flex; gap: 10px; background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center; flex-wrap: wrap;}
-        .add-link-box input.url-field { flex: 2; min-width: 200px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
-        .add-link-box input.access-field { flex: 1; min-width: 130px; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #111827; color: #38bdf8; border: 1px solid #38bdf8;}
-        .add-link-box .file-label { background: #475569; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; height: 20px; display: flex; align-items: center; gap: 5px; white-space: nowrap;}
-        .add-link-box .file-label:hover { background: #64748b; }
-        .add-link-box input[type="file"] { display: none; }
-        .add-link-box button { width: auto; padding: 0 16px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
-        .add-link-box button:hover { background: #059669; }
-        
-        .allowed-user-tag { background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; border: 1px solid rgba(56, 189, 248, 0.3); }
+        body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="login" class="login"> 
-    <div class="box"> 
-        <h2>INNO Login (v2)</h2>
-        <input id="email" placeholder="email"> 
-        <input id="password" type="password" placeholder="heslo">
-        <button type="button" onclick="login()">Login</button> 
-    </div>
+<div id="login" class="box">
+    <h2>INNO Prihlásenie</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Heslo">
+    <button onclick="login()">Login</button>
 </div>
 
-<div id="app" class="app">
-    <div class="sidebar"> 
-        <div class="sidebar-logo-container">
-            <svg class="novis-logo-svg" viewBox="0 0 180 48" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 14 v20 M15 20 c3 -5, 10 -5, 12 0 v14" stroke="#1d4ed8" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                <ellipse cx="44" cy="24" rx="9" ry="10" stroke="#a21caf" stroke-width="4.5" fill="none"/>
-                <path d="M62 14 l6 20 l6 -20" stroke="#1d4ed8" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-                <line x1="82" y1="14" x2="82" y2="15" stroke="#a21caf" stroke-width="5" stroke-linecap="round"/>
-                <line x1="82" y1="20" x2="82" y2="34" stroke="#a21caf" stroke-width="4.5" stroke-linecap="round"/>
-                <path d="M96 17 c0 -3, 10 -3, 10 1 c0 3, -10 4, -10 7 c0 4, 10 4, 10 1" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-            </svg>
-        </div>
-
-        <div id="sidebar-user-box" class="sidebar-user-card">
-            <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
-            <div id="sidebar-user-role" class="sidebar-user-role">...</div>
-        </div>
-
-        <div class="menu" onclick="show('dashboard')">Dashboard</div> 
-        <div class="menu" onclick="show('docs')">Dokumenty</div> 
-        <div class="menu" id="menu-library" onclick="show('library')">Knižnica</div> 
-        <div class="sidebar-hr-divider" style="margin: 10px 0; border-top: 1px solid #1f2937;"></div>
-        <div class="menu" id="menu-hr" onclick="show('hr')">HR</div> 
-        <div class="menu" id="menu-admin" onclick="show('admin')">Admin</div> 
-        <div class="menu" onclick="logout()">Logout</div> 
-    </div>
-    
-    <div class="content">
-        <div id="dashboard"> 
-            <h2>Dashboard</h2> 
-            <div class="card" id="welcome"></div> 
-        </div>
-        
-        <div id="docs" style="display:none;"> 
-            <h2>Dokumentácia spoločnosti</h2> 
-            
-            <div class="doc-category doc-category-clickable" onclick="toggleAccordion('cat-iso')">
-                📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
-            </div>
-            <div id="cat-iso" class="doc-subcategory-container">
-                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-iso-politika" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-iso-politika"></div></div>
-                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-iso-ciele" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-iso-ciele"></div></div>
-                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-iso-smernice" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-iso-smernice"></div></div>
-                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-iso-ine"></div></div>
-            </div>
-
-            <div class="doc-category doc-category-clickable" onclick="toggleAccordion('cat-isms')">
-                📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
-            </div>
-            <div id="cat-isms" class="doc-subcategory-container">
-                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-isms-politika" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-isms-politika"></div></div>
-                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-isms-ciele"></div></div>
-                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-isms-smernice"></div></div>
-                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine" class="doc-item-list"></div><div class="admin-upload-zone" id="zone-isms-ine"></div></div>
-            </div>
-        </div>
-
-        <div id="library" style="display:none;"> 
-            <h2>Interná knižnica INNO</h2> 
-            
-            <div class="doc-category">
-                <div>🌐 Úroveň 1: Nuclino</div>
-                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
-            </div>
-
-            <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
-                <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
-            </div>
-            <div id="cat-lib-private" class="doc-subcategory-container">
-                <div class="doc-subcategory">
-                    🔑 <b>Dokumenty s prideleným prístupom</b>
-                    <div id="list-lib-private" class="doc-item-list"></div>
-                    <div id="zone-lib-private"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="hr" style="display:none;"> 
-            <h2>HR sekcia</h2> 
-            <div class="card">Mzdy 🔒</div> 
-        </div>
-        
-        <div id="admin" style="display:none;"> 
-            <h2>Admin panel - Správa rolí</h2> 
-            <div id="users"></div> 
-        </div>
-    </div>
+<div id="app" style="display:none;">
+    <h1>Vitaj v intranete!</h1>
+    <button onclick="logout()">Odhlásiť</button>
 </div>
 
 <script>
-/* INICIALIZÁCIA FIREBASE */
-const firebaseConfig = {
-    apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
-    authDomain: "inno-intranet.firebaseapp.com",
-    projectId: "inno-intranet",
-    storageBucket: "inno-intranet.firebasestorage.app",
-    messagingSenderId: "816972324613",
-    appId: "1:816972324613:web:81429910b0de1e4cbda16c",
-    measurementId: "G-S9RGDS938Y"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
+        authDomain: "inno-intranet.firebaseapp.com",
+        projectId: "inno-intranet",
+        storageBucket: "inno-intranet.firebasestorage.app",
+        messagingSenderId: "816972324613",
+        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-let currentUser = null;
-
-auth.onAuthStateChanged((user) => {
-    if (user && !currentUser) { setupUserSession(user.email.toLowerCase()); } 
-    else if (!user) { document.getElementById("login").style.display = "flex"; document.getElementById("app").style.display = "none"; }
-});
-
-async function login() {
-    const email = document.getElementById("email").value.trim().toLowerCase(); 
-    const password = document.getElementById("password").value;
-    if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        await setupUserSession(userCredential.user.email.toLowerCase());
-    } catch(err) { alert("Chyba prihlásenia: " + err.message); }
-}
-
-async function setupUserSession(emailStr) {
-    try {
-        const snap = await db.collection("users").where("email", "==", emailStr).get();
-        if (!snap.empty) {
-            const userDoc = snap.docs[0];
-            currentUser = userDoc.data();
-            currentUser.docId = userDoc.id;
-            currentUser.email = emailStr;
-            
-            document.getElementById("login").style.display = "none";
-            document.getElementById("app").style.display = "block";
-            
-            // Dashboard
-            document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || emailStr) + " (" + currentUser.role + ")";
-            
-            // Zápis vizitky
-            const finalName = currentUser.name || emailStr.split('@')[0];
-            document.getElementById("sidebar-user-name").innerHTML = finalName;
-            document.getElementById("sidebar-user-role").innerHTML = currentUser.role;
-            
-            applyRoleVisibility();
-            if (currentUser.role === "admin") { loadAdmin(); }
-            loadDocuments();
-            loadLibrary();
-            show('dashboard');
-        } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba siete: " + e.message); }
-}
-
-function applyRoleVisibility() {
-    document.getElementById("menu-admin").style.display = "block";
-    document.getElementById("menu-hr").style.display = "block";
-
-    const docCategories = [
-        { l1: "iso", l2: "politika" }, { l1: "iso", l2: "ciele" }, { l1: "iso", l2: "smernice" }, { l1: "iso", l2: "ine" },
-        { l1: "isms", l2: "politika" }, { l1: "isms", l2: "ciele" }, { l1: "isms", l2: "smernice" }, { l1: "isms", l2: "ine" }
-    ];
-    
-    docCategories.forEach(cat => {
-        const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
-        if (zone) {
-            if (currentUser && currentUser.role === "admin") {
-                zone.innerHTML = `
-                    <div class="add-link-box">
-                        <input type="text" id="url-${cat.l1}-${cat.l2}" class="url-field" placeholder="Prilep SharePoint odkaz... ALEBO">
-                        <label class="file-label" for="file-${cat.l1}-${cat.l2}">📎 Súbor z PC</label>
-                        <input type="file" id="file-${cat.l1}-${cat.l2}" onchange="handleFileSelected('${cat.l1}', '${cat.l2}')">
-                        <button type="button" onclick="addDocumentLink(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
-                    </div>
-                `;
-            } else { zone.innerHTML = ""; }
+    async function login() {
+        const email = document.getElementById("email").value.trim().toLowerCase();
+        const password = document.getElementById("password").value;
+        try {
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+            alert("Úspešne prihlásený!");
+            location.reload();
+        } catch(e) {
+            alert("Chyba prihlásenia: " + e.message);
         }
-    });
-
-    const zonePrivate = document.getElementById("zone-lib-private");
-    if (zonePrivate) {
-        if (currentUser && currentUser.role === "admin") {
-            document.getElementById("folder-lib-private").style.display = "flex";
-            zonePrivate.innerHTML = `
-                <div class="add-link-box">
-                    <input type="text" id="url-lib-private" class="url-field" placeholder="Prilep odkaz na tajný dokument... ALEBO">
-                    <label class="file-label" for="file-lib-private">📎 Súbor z PC</label>
-                    <input type="file" id="file-lib-private" onchange="handleFileSelected('lib', 'private')">
-                    <input type="text" id="access-lib-private" class="access-field" placeholder="E-mail pre prístup (napr. peter@inno.sk)">
-                    <button type="button" onclick="addLibraryItem(event, 'private')">🔒 Uložiť s prístupom</button>
-                </div>
-            `;
-        } else { zonePrivate.innerHTML = ""; }
     }
 
-    if (currentUser && currentUser.role === "user") { document.getElementById("menu-admin").style.display = "none"; document.getElementById("menu-hr").style.display = "none"; }
-    if (currentUser && currentUser.role === "hr") { document.getElementById("menu-admin").style.display = "none"; }
-}
-
-function handleFileSelected(catL1, catL2) {
-    const fileInput = document.getElementById(`file-${catL1}-${catL2}`);
-    if (fileInput && fileInput.files.length > 0) {
-        const label = document.querySelector(`label[for="file-${catL1}-${catL2}"]`);
-        if (label) label.innerText = "✓ " + fileInput.files[0].name;
-    }
-}
-
-function loadLibrary() {
-    const isAdmin = (currentUser && currentUser.role === 'admin');
-    const myEmail = currentUser ? currentUser.email.toLowerCase() : "";
-
-    db.collection("library").onSnapshot((snapshot) => {
-        const listPrivate = document.getElementById("list-lib-private");
-        if (!listPrivate) return;
-        
-        listPrivate.innerHTML = "";
-        let hasVisiblePrivateDocs = false;
-
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const id = doc.id;
-            
-            let
+    function logout() { firebase.auth().signOut().then(() => location.reload()); }
+</script>
+</body>
+</html>
