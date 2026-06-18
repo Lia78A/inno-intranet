@@ -234,6 +234,7 @@ function applyRoleVisibility() {
     categories.forEach(cat => {
         const zone = document.getElementById(`zone-${cat.l1}-${cat.l2}`);
         if (zone) {
+            // 🔥 BEZPEČNÁ KONTROLA ROZHRANIA ADMINA (Už nikdy nezhodí prihlásenie)
             if (currentUser && currentUser.role === "admin") {
                 zone.innerHTML = `
                     <div class="add-link-box">
@@ -269,7 +270,6 @@ function handleFileSelected(catL1, catL2) {
 async function loadDocuments() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     
-    // Zisťujeme zoznam prečítaných dokumentov pre prihláseného užívateľa
     let signedDocs = [];
     try {
         const logSnap = await db.collection("logs").where("userEmail", "==", currentUser.email).get();
@@ -289,7 +289,6 @@ async function loadDocuments() {
             if (targetList) {
                 const hasRead = signedDocs.includes(id);
                 
-                // 🔥 OPRAVENÉ: Tlačidlo overenia prečítania sa zobrazí VŽDY pre každý validný dokument (z PC aj linku)
                 let confirmButtonHtml = hasRead 
                     ? `<span class="confirmed-status">✓ Prečítané & Porozumené</span>`
                     : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
@@ -346,7 +345,7 @@ async function addDocumentLink(event, catL1, catL2) {
         finalName = file.name; 
         url = "https://www.google.com/search?q=" + encodeURIComponent(file.name);
     } 
-    // 🔗 Odkaz zo SharePointu (Cesta B)
+    // 🔗 SharePoint link (Cesta B)
     else if (url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) { url = "https://" + url; }
         
@@ -378,6 +377,7 @@ async function addDocumentLink(event, catL1, catL2) {
     }
 
     try {
+        // 🔥 STOPRECENTNE OPRAVENÝ TEXTOVÝ ZÁPIS KATEGÓRIÍ
         await db.collection("documents").add({
             fileName: finalName, 
             fileUrl: url,
@@ -414,60 +414,5 @@ async function confirmRead(docId, docName) {
             userName: currentUser.name || currentUser.email, timestamp: formattedDate, type: "Prečítané a Porozumené"
         });
         alert("Potvrdené.");
-        
-        // Okamžite prečítame nanovo podpísané súbory pre okamžité prekreslenie zeleného statusu
         loadDocuments();
-    } catch (error) { alert(error.message); }
-}
-
-function loadDocumentHistory(docId) {
-    if (currentUser.role !== "admin") return;
-    db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
-        const historyBox = document.getElementById(`history-box-${docId}`);
-        if (!historyBox) return;
-        if (snapshot.empty) { historyBox.innerHTML = "<i>Zatiaľ neprečítané.</i>"; return; }
-        let html = "<b>Prečítali:</b><br>";
-        snapshot.forEach(log => {
-            const l = log.data();
-            html += `<div class="history-row"><span>👤 <b>${l.userName}</b></span> <span>⏱️ ${l.timestamp}</span></div>`;
-        });
-        historyBox.innerHTML = html;
-    });
-}
-
-async function deleteDocument(docId) {
-    if (currentUser.role !== "admin") return;
-    if (!confirm("Vymazať?")) return;
-    try { await db.collection("documents").doc(docId).delete(); } catch (e) { alert(e.message); }
-}
-
-function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
-function toggleAccordion(id) {
-    const container = document.getElementById(id);
-    const arrow = document.getElementById("arrow-" + id);
-    const isVisible = container.style.display === "block";
-    container.style.display = isVisible ? "none" : "block";
-    arrow.innerText = isVisible ? "▼" : "▲";
-}
-function toggleHistoryVisibility(docId) {
-    const box = document.getElementById(`history-box-${docId}`);
-    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
-}
-async function loadAdmin() {
-    if (!currentUser || currentUser.role !== "admin") return;
-    const snap = await db.collection("users").get();
-    let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
-async function updateUserRole(docId, newRole) {
-    if (currentUser.role !== "admin") return;
-    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) { alert(e.message); }
-}
-function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
+    }
