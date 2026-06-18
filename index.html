@@ -22,9 +22,9 @@
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%; display: flex; flex-direction: column;}
         .content { margin-left: 240px; padding: 20px;}
         
-        /* 🔥 UPRAVENÝ DIZAJN LOGA: Väčšie (180px) a biela farba pozadia sa odfiltruje na transparentnú */
-        .sidebar-logo-container { width: 100%; max-width: 180px; min-height: 40px; margin-bottom: 15px; display: flex; align-items: center; font-size: 1.6em; font-weight: bold; color: #38bdf8; letter-spacing: 1px;}
-        .sidebar-logo-container img { width: 100%; height: auto; display: block; mix-blend-mode: multiply; filter: brightness(1.3) contrast(1.1); background: transparent;}
+        /* 🔥 UPRAVENÝ DIZAJN LOGA: Väčšie (180px), biele pozadie sa odfiltruje na priesvitné */
+        .sidebar-logo-container { width: 100%; max-width: 180px; margin-bottom: 15px; display: block;}
+        .sidebar-logo-container img { width: 100%; height: auto; display: block; mix-blend-mode: screen; filter: brightness(1.3) contrast(1.1); background: transparent;}
         
         /* STABILNÝ PROFIL V SIDEBARE */
         .sidebar-user-card { background: #1e293b; padding: 12px; border-radius: 8px; margin: 5px 0 20px 0; font-size: 0.9em; border: 1px solid #334155; color: white; display: block !important;}
@@ -84,6 +84,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -93,12 +94,15 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
-        <div class="sidebar-logo-container" id="logo-wrap">
-            <img src="inno_proj.png" id="sidebar-main-logo" alt="novis" onerror="handleLogoError();">
+        <!-- 🔥 FIX: Čistá, priama cesta k logu bez rizikových onerror funkcií -->
+        <div class="sidebar-logo-container">
+            <img src="inno_proj.png" id="sidebar-main-logo" alt="novis logo">
         </div>
 
+        <!-- STABILNÝ PROFIL V SIDEBARE -->
         <div id="sidebar-user-box" class="sidebar-user-card">
             <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
             <div id="sidebar-user-role" class="sidebar-user-role">...</div>
@@ -119,6 +123,7 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -143,6 +148,7 @@
             </div>
         </div>
 
+        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
@@ -151,6 +157,7 @@
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
+            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -176,22 +183,6 @@
 </div>
 
 <script>
-/* 🔥 INTELIGENTNÝ LOGO FALLBACK */
-let errorCount = 0;
-function handleLogoError() {
-    const logoImg = document.getElementById("sidebar-main-logo");
-    if (!logoImg) return;
-    
-    errorCount++;
-    if (errorCount === 1) {
-        // Skúška druhej možnej cesty (cez priečinok vytvorený omylom)
-        logoImg.src = "inno_proj.png/inno_proj.png";
-    } else {
-        // Posledná záchrana: nahradenie nefunkčnej ikonky elegantným nápisom, aby aplikácia fungovala
-        document.getElementById("logo-wrap").innerHTML = "novis";
-    }
-}
-
 /* INICIALIZÁCIA FIREBASE */
 const firebaseConfig = {
     apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
@@ -437,7 +428,7 @@ async function loadDocuments() {
                 const hasRead = signedDocs.includes(id);
                 let confirmButtonHtml = hasRead 
                     ? `<span class="confirmed-status">✓ Prečítané & Porozumené</span>`
-                    : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '" + data.fileName + "')">👁 Potvrdiť prečítanie</button>`;
+                    : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
                 let fileIcon = "📄";
                 const lowerName = data.fileName.toLowerCase();
                 if (lowerName.endsWith(".pdf")) fileIcon = "📕";
@@ -445,7 +436,7 @@ async function loadDocuments() {
                 else if (lowerName.endsWith(".docx") || lowerName.endsWith(".doc")) fileIcon = "📘";
                 let adminActionsHtml = isAdmin ? `
                     <button class="history-btn" onclick="toggleHistoryVisibility('${id}')">📊 História</button>
-                    <button class="rename-btn" onclick="renameDocument('${id}', '" + data.fileName + "')">✏️ Premenovať</button>
+                    <button class="rename-btn" onclick="renameDocument('${id}', '${data.fileName}')">✏️ Premenovať</button>
                     <button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>
                 ` : "";
                 targetList.innerHTML += `
@@ -537,13 +528,6 @@ async function deleteDocument(docId) {
 
 /* POMOCNÉ FUNKCIE ROZHRANIA */
 function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
-
-// Ochranná funkcia pre harmoniku, aby kliknutie na externý odkaz nezbalilo/nerozbalilo priečinok
-function handleCategoryClick(event, id) {
-    if (event.target.tagName.toLowerCase() !== 'a') {
-        toggleAccordion(id);
-    }
-}
 
 function toggleAccordion(id) {
     const container = document.getElementById(id);
