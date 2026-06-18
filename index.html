@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <style>
         body { margin: 0; font-family: Arial; background: #0f172a; color: white;}
         /* LOGIN */
@@ -14,6 +15,7 @@
         .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
         input, select { width: 100%; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box;}
         button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; margin-top: 10px;}
+        button:hover { background: #1d4ed8; }
         /* APP */
         .app { display: none; height: 100vh;}
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%;}
@@ -21,17 +23,26 @@
         .menu { padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;}
         .menu:hover { background: #1f2937;}
         .card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
+        
         .admin-user-card { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px;}
         .admin-user-card select { width: auto; margin: 0; padding: 5px;}
 
-        /* ŠTÝLY PRE DOKUMENTY (ÚROVEŇ 1 a 2) */
+        /* ŠTÝLY PRE DOKUMENTY & ACCORDION */
         .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;}
         .doc-category:hover { background: #334155; }
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
-        .doc-subcategory { background: #1f2937; padding: 12px; margin: 5px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
-        .doc-item { background: #334155; padding: 8px; margin: 5px 0; border-radius: 6px; font-size: 0.9em; color: #cbd5e1; list-style-type: none;}
-        .doc-item a { color: #38bdf8; text-decoration: none; }
+        .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
+        .doc-item-list { margin: 5px 0; padding-left: 0; }
+        .doc-item { background: #334155; padding: 10px; margin: 5px 0; border-radius: 6px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;}
+        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; }
         .doc-item a:hover { text-decoration: underline; }
+        .delete-btn { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;}
+        .delete-btn:hover { background: #dc2626; }
+
+        /* DRAG & DROP ZÓNA */
+        .drop-zone { background: rgba(37, 99, 235, 0.05); border: 2px dashed #334155; border-radius: 6px; padding: 15px; text-align: center; color: #94a3b8; font-size: 0.85em; cursor: pointer; margin-top: 10px; transition: all 0.2s ease;}
+        .drop-zone:hover, .drop-zone.dragover { background: rgba(37, 99, 235, 0.15); border-color: #2563eb; color: white; }
+        .drop-zone input[type="file"] { display: none; }
     </style>
 </head>
 <body>
@@ -66,47 +77,54 @@
             <h2>Dokumentácia spoločnosti</h2> 
             
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
-                📁 Úroveň 1: ISO <span>▼</span>
+                📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
             <div id="cat-iso" class="doc-subcategory-container">
                 <div class="doc-subcategory">
-                    🔒 <b>Politika</b>
-                    <div class="doc-item">Nasadená ISO politika kvality.pdf</div>
+                    🔒 <b>Politika</b> 
+                    <div id="list-iso-politika" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISO" data-l2="politika"></div>
                 </div>
                 <div class="doc-subcategory">
-                    🎯 <b>Ciele</b>
-                    <div class="doc-item">Ročné ISO ciele pre rok 2026.pdf</div>
+                    🎯 <b>Ciele</b> 
+                    <div id="list-iso-ciele" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISO" data-l2="ciele"></div>
                 </div>
                 <div class="doc-subcategory">
-                    📜 <b>Smernice</b>
-                    <div class="doc-item">Smernica pre riadenie kvality v1.2.pdf</div>
+                    📜 <b>Smernice</b> 
+                    <div id="list-iso-smernice" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISO" data-l2="smernice"></div>
                 </div>
                 <div class="doc-subcategory">
-                    📎 <b>Iné</b>
-                    <div class="doc-item">Záznamy z interných auditov.docx</div>
+                    📎 <b>Iné</b> 
+                    <div id="list-iso-ine" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISO" data-l2="ine"></div>
                 </div>
             </div>
 
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
-                📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span>▼</span>
+                📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
             <div id="cat-isms" class="doc-subcategory-container">
                 <div class="doc-subcategory">
-                    🔒 <b>Politika</b>
-                    <div class="doc-item">Bezpečnostná politika ISMS v3.0.pdf</div>
+                    🔒 <b>Politika</b> 
+                    <div id="list-isms-politika" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="politika"></div>
                 </div>
                 <div class="doc-subcategory">
-                    🎯 <b>Ciele</b>
-                    <div class="doc-item">Ciele informačnej bezpečnosti INNO.pdf</div>
+                    🎯 <b>Ciele</b> 
+                    <div id="list-isms-ciele" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="ciele"></div>
                 </div>
                 <div class="doc-subcategory">
-                    📜 <b>Smernice</b>
-                    <div class="doc-item">Smernica pre prácu s citlivými údajmi.pdf</div>
-                    <div class="doc-item">Heslová politika a prístupy.pdf</div>
+                    📜 <b>Smernice</b> 
+                    <div id="list-isms-smernice" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="smernice"></div>
                 </div>
                 <div class="doc-subcategory">
-                    📎 <b>Iné</b>
-                    <div class="doc-item">Plán obnovy po havárii (Disaster Recovery).pdf</div>
+                    📎 <b>Iné</b> 
+                    <div id="list-isms-ine" class="doc-item-list"></div>
+                    <div class="admin-upload-zone" data-l1="ISMS" data-l2="ine"></div>
                 </div>
             </div>
         </div>
@@ -144,6 +162,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 let currentUser = null;
 
 // SLEDOVANIE STAVU PRIHLÁSENIA
@@ -165,11 +184,11 @@ auth.onAuthStateChanged(async (user) => {
             
             document.getElementById("login").style.display = "none";
             document.getElementById("app").style.display = "block";
-            
             document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || user.email) + " (" + currentUser.role + ")";
             
             applyRoleVisibility();
             loadAdmin();
+            loadDocuments();
             show('dashboard');
         } else {
             alert("CHYBA: V databáze sa nenašiel profil pre e-mail: " + user.email);
@@ -181,19 +200,37 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-/* LOGIN FUNCTION */
 function login() {
     const email = document.getElementById("email").value.trim(); 
     const password = document.getElementById("password").value;
-    
-    auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert(err.message));
+    auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
 }
 
-/* ROLY A VIDITEĽNOSŤ V SIDEBARE */
+/* ROLY A VIDITEĽNOSŤ ZÓN */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
+
+    const isPowerUser = (currentUser.role === 'admin' || currentUser.role === 'hr');
+    
+    // Generovanie Drag & Drop zón iba pre Admina a HR
+    document.querySelectorAll(".admin-upload-zone").forEach(zone => {
+        if (isPowerUser) {
+            const l1 = zone.getAttribute("data-l1");
+            const l2 = zone.getAttribute("data-l2");
+            const uniqueId = `file-${l1}-${l2}`;
+            
+            zone.innerHTML = `
+                <div class="drop-zone" onclick="document.getElementById('${uniqueId}').click()" id="zone-${l1}-${l2}">
+                    ➕ Potiahni sem súbor alebo klikni pre pridanie do sekcie ${l2}
+                    <input type="file" id="${uniqueId}" onchange="handleFileSelect('${l1}', '${l2}', this.files)">
+                </div>
+            `;
+            setupDragAndDrop(l1, l2);
+        } else {
+            zone.innerHTML = ""; // Bežný user nevidí nič na nahrávanie
+        }
+    });
 
     if (currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
@@ -204,41 +241,132 @@ function applyRoleVisibility() {
     }
 }
 
+/* NASTAVENIE DRAG & DROP UDALOSTÍ */
+function setupDragAndDrop(l1, l2) {
+    setTimeout(() => {
+        const dropZone = document.getElementById(`zone-${l1}-${l2}`);
+        if (!dropZone) return;
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFileSelect(l1, l2, files);
+        }, false);
+    }, 100);
+}
+
 /* PREPÍNANIE ZÁLOŽIEK */
 function show(id) { 
     document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
     document.getElementById(id).style.display = "block";
 }
 
-/* FUNKCIA PRE ROZBAĽOVANIE KATEGÓRIÍ (ACCORDION) */
+/* ROZBAĽOVANIE KATEGÓRIÍ (ACCORDION) */
 function toggleAccordion(id) {
     const container = document.getElementById(id);
+    const arrow = document.getElementById("arrow-" + id);
     const isVisible = container.style.display === "block";
-    
-    // Zatvoríme prípadné iné otvorené kategórie (voliteľné, pre čistotu)
-    document.querySelectorAll(".doc-subcategory-container").forEach(c => c.style.display = "none");
-    
-    // Prepíname zobrazenie aktuálnej kategórie
     container.style.display = isVisible ? "none" : "block";
+    arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-/* ADMIN PANEL: NAČÍTANIE A SPRÁVA ROLÍ */
+/* 📥 NAČÍTANIE DOKUMENTOV */
+function loadDocuments() {
+    db.collection("documents").onSnapshot((snapshot) => {
+        document.querySelectorAll(".doc-item-list").forEach(list => list.innerHTML = "");
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const id = doc.id;
+            const targetListId = `list-${data.categoryL1.toLowerCase()}-${data.categoryL2.toLowerCase()}`;
+            const targetList = document.getElementById(targetListId);
+
+            if (targetList) {
+                const showDelete = (currentUser.role === 'admin' || currentUser.role === 'hr');
+                const itemHtml = `
+                    <div class="doc-item">
+                        <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                        ${showDelete ? `<button class="delete-btn" onclick="deleteDocument('${id}', '${data.storagePath}')">Zmazať</button>` : ''}
+                    </div>
+                `;
+                targetList.innerHTML += itemHtml;
+            }
+        });
+    });
+}
+
+/* 📤 SPRACOVANIE A NAHRATIE SÚBORU */
+async function handleFileSelect(catL1, catL2, files) {
+    if (files.length === 0) return;
+    const file = files[0];
+    
+    const storagePath = `documents/${catL1}/${file.name}`;
+    const storageRef = storage.ref(storagePath);
+
+    try {
+        const zoneElement = document.getElementById(`zone-${catL1}-${catL2}`);
+        zoneElement.innerText = "⏳ Nahrávam súbor...";
+
+        // 1. Storage upload
+        const snapshot = await storageRef.put(file);
+        // 2. URL link
+        const fileUrl = await snapshot.ref.getDownloadURL();
+
+        // 3. Firestore zápis
+        await db.collection("documents").add({
+            fileName: file.name,
+            fileUrl: fileUrl,
+            categoryL1: catL1,
+            categoryL2: catL2,
+            storagePath: storagePath,
+            uploadedBy: currentUser.email
+        });
+
+        alert(`Súbor "${file.name}" bol úspešne pridaný do sekcie ${catL2}!`);
+    } catch (error) {
+        alert("Chyba pri nahrávaní: " + error.message);
+    } finally {
+        applyRoleVisibility(); // Resetuje vzhľad zón spät na pôvodný text
+    }
+}
+
+/* ❌ VYMAZANIE DOKUMENTU */
+async function deleteDocument(docId, storagePath) {
+    if (!confirm("Naozaj chcete tento dokument vymazať?")) return;
+    try {
+        await storage.ref(storagePath).delete();
+        await db.collection("documents").doc(docId).delete();
+        alert("Dokument bol vymazaný.");
+    } catch (error) {
+        alert("Chyba pri mazaní: " + error.message);
+    }
+}
+
+/* ADMIN PANEL */
 async function loadAdmin() {
     if (currentUser.role !== "admin") return;
-    
     const snap = await db.collection("users").get();
     let html = "";
-    
     snap.forEach(doc => { 
         const u = doc.data();
         const docId = doc.id;
-        
         html += `
         <div class="admin-user-card"> 
-            <div>
-                <b>${u.name || 'Nepomenovaný užívateľ'}</b><br> 
-                ${u.email}
-            </div>
+            <div><b>${u.name || 'Nepomenovaný užívateľ'}</b><br>${u.email}</div>
             <div>
                 <label>Rola: </label>
                 <select onchange="updateUserRole('${docId}', this.value)">
@@ -253,14 +381,10 @@ async function loadAdmin() {
     document.getElementById("users").innerHTML = html;
 }
 
-/* FUNKCIA NA ZMENU ROLY ADMINOM */
 async function updateUserRole(docId, newRole) {
     try {
-        await db.collection("users").doc(docId).update({
-            role: newRole
-        });
+        await db.collection("users").doc(docId).update({ role: newRole });
         alert("Rola bola úspešne zmenená!");
-        
         if (docId === currentUser.docId) {
             currentUser.role = newRole;
             applyRoleVisibility();
@@ -271,11 +395,8 @@ async function updateUserRole(docId, newRole) {
     }
 }
 
-/* LOGOUT */
 function logout() { 
-    auth.signOut().then(() => {
-        currentUser = null;
-    });
+    auth.signOut().then(() => { currentUser = null; });
 }
 </script>
 </body>
