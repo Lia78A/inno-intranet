@@ -65,6 +65,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -74,6 +75,7 @@
     </div>
 </div>
 
+<!-- APP -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -91,9 +93,11 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
+            <!-- ÚROVEŇ 1: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -120,6 +124,7 @@
                 </div>
             </div>
 
+            <!-- ÚROVEŇ 1: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -221,10 +226,17 @@ auth.onAuthStateChanged(async (user) => {
 function login() {
     const email = document.getElementById("email").value.trim(); 
     const password = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+    
+    if(!email || !password) {
+        alert("Prosím, vyplň e-mail aj heslo.");
+        return;
+    }
+
+    auth.signInWithEmailAndPassword(email, password)
+    .catch(err => alert("Chyba prihlásenia: " + err.message));
 }
 
-/* ROLY A VIDITEĽNOSŤ ZÓN PRIDÁVANIA */
+/* ROLY A VZHLAD */
 function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
@@ -265,14 +277,13 @@ function toggleAccordion(id) {
     arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-/* 📥 NAČÍTANIE DOKUMENTOV A LOGOV O PREČÍTANÍ (Zmena: len pre admina) */
+/* 📥 NAČÍTANIE DOKUMENTOV */
 async function loadDocuments() {
     const isAdmin = (currentUser && currentUser.role === 'admin');
     const isHr = (currentUser && currentUser.role === 'hr');
     
     let signedDocs = [];
     if (isAdmin) {
-        // Iba adminovi sťahujeme informácie o tom, čo už on sám potvrdil
         const logSnap = await db.collection("logs").where("userEmail", "==", currentUser.email).get();
         logSnap.forEach(l => signedDocs.push(l.data().docId));
     }
@@ -289,7 +300,6 @@ async function loadDocuments() {
             if (targetList) {
                 const hasRead = signedDocs.includes(id);
 
-                // Tlačidlo "Potvrdiť" vygenerujeme IBA vtedy, ak je to prihlásený Admin
                 let confirmButtonHtml = "";
                 if (isAdmin) {
                     confirmButtonHtml = hasRead 
@@ -310,12 +320,11 @@ async function loadDocuments() {
                                 ${(isAdmin || isHr) ? `<button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>` : ''}
                             </div>
                         </div>
-                        ${isAdmin ? `<div id="history-box-${docId = id}" class="read-history-box">⏳ Načítavam históriu...</div>` : ''}
+                        ${isAdmin ? `<div id="history-box-${id}" class="read-history-box">⏳ Načítavam históriu...</div>` : ''}
                     </div>
                 `;
                 targetList.innerHTML += itemHtml;
                 
-                // Na pozadí načítame históriu podpisov len ak sme Admin
                 if (isAdmin) {
                     loadDocumentHistory(id);
                 }
@@ -324,7 +333,7 @@ async function loadDocuments() {
     });
 }
 
-/* 👁️ FUNKCIA: ZÁPIS POTVRDENIA O PREČÍTANÍ S ČASOVOU PEČIATKOU */
+/* 👁️ POTVRDENIE PREČÍTANIA */
 async function confirmRead(docId, docName) {
     if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli a beriete ho na vedomie?`)) return;
 
@@ -348,7 +357,7 @@ async function confirmRead(docId, docName) {
     }
 }
 
-/* 📊 NAČÍTANIE HISTÓRIE PRE KONKRÉTNY DOKUMENT (Iba pre Admina) */
+/* 📊 HISTÓRIA PREČÍTANIA */
 function loadDocumentHistory(docId) {
     db.collection("logs")
       .where("docId", "==", docId)
@@ -372,3 +381,104 @@ function loadDocumentHistory(docId) {
                   </div>
               `;
           });
+          historyBox.innerHTML = html;
+      });
+}
+
+function toggleHistoryVisibility(docId) {
+    const box = document.getElementById(`history-box-${docId}`);
+    if (box) {
+        box.style.display = box.style.display === "block" ? "none" : "block";
+    }
+}
+
+/* 📤 PRIDANIE ODKAZU */
+async function addDocumentLink(catL1, catL2) {
+    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
+    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
+    
+    const name = nameInput.value.trim();
+    let url = urlInput.value.trim();
+
+    if (!name || !url) {
+        alert("Prosím, vyplň názov aj odkaz.");
+        return;
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
+
+    try {
+        await db.collection("documents").add({
+            fileName: name,
+            fileUrl: url,
+            categoryL1: catL1,
+            categoryL2: catL2,
+            uploadedBy: currentUser ? currentUser.email : "neznámy"
+        });
+
+        alert("Dokument bol úspešne pridaný do intranetu!");
+        nameInput.value = "";
+        urlInput.value = "";
+    } catch (error) {
+        alert("Chyba pri ukladaní: " + error.message);
+    }
+}
+
+/* ❌ VYMAZANIE ODKAZU */
+async function deleteDocument(docId) {
+    if (!confirm("Naozaj chcete tento odkaz vymazať?")) return;
+    try {
+        await db.collection("documents").doc(docId).delete();
+        alert("Odkaz bol vymazaný.");
+    } catch (error) {
+        alert("Chyba pri mazaní: " + error.message);
+    }
+}
+
+/* ADMIN PANEL */
+async function loadAdmin() {
+    if (!currentUser || currentUser.role !== "admin") return;
+    const snap = await db.collection("users").get();
+    let html = "";
+    snap.forEach(doc => { 
+        const u = doc.data();
+        const docId = doc.id;
+        html += `
+        <div class="admin-user-card"> 
+            <div><b>${u.name || 'Nepomenovaný užívateľ'}</b><br>${u.email}</div>
+            <div>
+                <label>Rola: </label>
+                <select onchange="updateUserRole('${docId}', this.value)">
+                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
+                    <option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option>
+                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+            </div>
+        </div> 
+        `; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
+
+async function updateUserRole(docId, newRole) {
+    try {
+        await db.collection("users").doc(docId).update({ role: newRole });
+        alert("Rola bola úspešne zmenená!");
+        if (docId === currentUser.docId) {
+            currentUser.role = newRole;
+            applyRoleVisibility();
+            if (newRole !== 'admin') show('dashboard');
+        }
+    } catch (error) {
+        alert("Chyba pri zmene roly: " + error.message);
+    }
+}
+
+function logout() { 
+    auth.signOut().then(() => { currentUser = null; location.reload(); });
+}
+</script>
+</body>
+</html>
