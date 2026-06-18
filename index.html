@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { margin: 0; font-family: Arial; background: #0f172a; color: white;}
+        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white;}
         /* LOGIN */
         .login { height: 100vh; display: flex; justify-content: center; align-items: center;}
         .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px;}
@@ -32,14 +32,25 @@
         .doc-subcategory-container { display: none; padding-left: 20px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
         .doc-item-list { margin: 5px 0; padding-left: 0; }
-        .doc-item { background: #334155; padding: 10px; margin: 5px 0; border-radius: 6px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;}
-        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        
+        /* Krajší a výraznejší riadok dokumentu */
+        .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;}
+        .doc-item:hover { background: #475569; }
+        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; }
         .doc-item a:hover { text-decoration: underline; }
-        .delete-btn { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;}
+        
+        /* Väčšia ikona súboru */
+        .doc-icon { font-size: 1.4em; } 
+        
+        .delete-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .delete-btn:hover { background: #dc2626; }
         
-        /* FORMULÁR NA LINKY */
-        .add-link-box { background: #1e293b; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #334155;}
+        /* NOVÝ MENŠÍ A KOMPAKTNEJŠÍ FORMULÁR V JEDNOM RIADKU */
+        .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
+        .add-link-box input { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px;}
+        .add-link-box input.url-field { flex: 2; } /* Políčko pre URL bude o niečo širšie */
+        .add-link-box button { width: auto; padding: 0 12px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981;}
+        .add-link-box button:hover { background: #059669; }
     </style>
 </head>
 <body>
@@ -207,16 +218,16 @@ function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    // Vygenerujeme formuláre pre pridávanie odkazov
+    // Vygenerujeme kompaktné formuláre
     document.querySelectorAll(".admin-upload-zone").forEach(zone => {
         const l1 = zone.getAttribute("data-l1");
         const l2 = zone.getAttribute("data-l2");
         
         zone.innerHTML = `
             <div class="add-link-box">
-                <input type="text" id="name-${l1}-${l2}" placeholder="Názov dokumentu (napr. Smernica BOZP)">
-                <input type="text" id="url-${l1}-${l2}" placeholder="Odkaz/URL na dokument (Google disk...)">
-                <button onclick="addDocumentLink('${l1}', '${l2}')" style="padding: 5px; font-size: 0.85em; margin-top: 0;">➕ Pridať odkaz</button>
+                <input type="text" id="name-${l1}-${l2}" placeholder="Názov dokumentu...">
+                <input type="text" id="url-${l1}-${l2}" class="url-field" placeholder="Odkaz z OneDrive / SharePoint (+ ?download=1)">
+                <button onclick="addDocumentLink('${l1}', '${l2}')">➕ Pridať</button>
             </div>
         `;
     });
@@ -224,7 +235,7 @@ function applyRoleVisibility() {
     if (currentUser && currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
-        document.querySelectorAll(".admin-upload-zone").forEach(z => z.innerHTML = ""); // Bežný user nepridáva nič
+        document.querySelectorAll(".admin-upload-zone").forEach(z => z.innerHTML = "");
     }
     if (currentUser && currentUser.role === "hr") { 
         document.getElementById("menu-admin").style.display = "none"; 
@@ -246,7 +257,7 @@ function toggleAccordion(id) {
     arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-/* 📥 NAČÍTANIE DOKUMENTOV Z FIRESTORE */
+/* 📥 NAČÍTANIE DOKUMENTOV */
 function loadDocuments() {
     db.collection("documents").onSnapshot((snapshot) => {
         document.querySelectorAll(".doc-item-list").forEach(list => list.innerHTML = "");
@@ -261,7 +272,10 @@ function loadDocuments() {
                 const showDelete = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'hr'));
                 const itemHtml = `
                     <div class="doc-item">
-                        <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                        <a href="${data.fileUrl}" target="_blank">
+                            <span class="doc-icon">📄</span> 
+                            <span>${data.fileName}</span>
+                        </a>
                         ${showDelete ? `<button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>` : ''}
                     </div>
                 `;
@@ -271,7 +285,7 @@ function loadDocuments() {
     });
 }
 
-/* 📤 FUNKCIA: PRIDANIE ODKAZU DO FIRESTORE */
+/* 📤 PRIDANIE ODKAZU */
 async function addDocumentLink(catL1, catL2) {
     const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
     const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
@@ -284,7 +298,6 @@ async function addDocumentLink(catL1, catL2) {
         return;
     }
 
-    // Automaticky pridáme https:// ak chýba
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
     }
@@ -298,11 +311,11 @@ async function addDocumentLink(catL1, catL2) {
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
-        alert("Odkaz na dokument bol úspešne pridaný!");
+        alert("Dokument bol úspešne pridaný do intranetu!");
         nameInput.value = "";
         urlInput.value = "";
     } catch (error) {
-        alert("Chyba pri ukladaní odkazu: " + error.message);
+        alert("Chyba pri ukladaní: " + error.message);
     }
 }
 
