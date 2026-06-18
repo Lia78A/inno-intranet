@@ -505,4 +505,73 @@ async function renameDocument(docId, currentName) {
 
 async function confirmRead(docId, docName) {
     if (!currentUser) return;
-    if (!confirm(`Potvrdzujete, že ste dokumentu "${docName
+    if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli?`)) return;
+    const formattedDate = new Date().toLocaleString("sk-SK");
+    try {
+        await db.collection("logs").add({
+            docId: docId, docName: docName, userEmail: currentUser.email, userName: currentUser.name || currentUser.email, timestamp: formattedDate, type: "Prečítané a Porozumené"
+        });
+        alert("Potvrdené."); loadDocuments();
+    } catch (error) { alert(error.message); }
+}
+
+function loadDocumentHistory(docId) {
+    if (!currentUser || currentUser.role !== "admin") return;
+    db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
+        const historyBox = document.getElementById(`history-box-${docId}`);
+        if (!historyBox) return;
+        if (snapshot.empty) { historyBox.innerHTML = "<i>Zatiaľ neprečítané.</i>"; return; }
+        let html = "<b>Prečítali:</b><br>";
+        snapshot.forEach(log => {
+            const l = log.data(); html += `<div class="history-row"><span>👤 <b>${l.userName}</b></span> <span>⏱️ ${l.timestamp}</span></div>`;
+        });
+        historyBox.innerHTML = html;
+    });
+}
+
+async function deleteDocument(docId) {
+    if (!currentUser || currentUser.role !== "admin") return;
+    if (!confirm("Vymazať?")) return;
+    try { await db.collection("documents").doc(docId).delete(); } catch(e) {}
+}
+
+/* POMOCNÉ FUNKCIE ROZHRANIA */
+function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
+
+// Ochranná funkcia pre harmoniku, aby kliknutie na externý odkaz nezbalilo/nerozbalilo priečinok
+function handleCategoryClick(event, id) {
+    if (event.target.tagName.toLowerCase() !== 'a') {
+        toggleAccordion(id);
+    }
+}
+
+function toggleAccordion(id) {
+    const container = document.getElementById(id);
+    const arrow = document.getElementById("arrow-" + id);
+    const isVisible = container.style.display === "block";
+    container.style.display = isVisible ? "none" : "block";
+    if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
+}
+
+function toggleHistoryVisibility(docId) {
+    const box = document.getElementById(`history-box-${docId}`);
+    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
+}
+async function loadAdmin() {
+    if (!currentUser || currentUser.role !== "admin") return;
+    const snap = await db.collection("users").get();
+    let html = "";
+    snap.forEach(doc => { 
+        const u = doc.data();
+        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
+    });
+    document.getElementById("users").innerHTML = html;
+}
+async function updateUserRole(docId, newRole) {
+    if (!currentUser || currentUser.role !== "admin") return;
+    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch(e) {}
+}
+function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
