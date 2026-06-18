@@ -65,6 +65,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -74,6 +75,7 @@
     </div>
 </div>
 
+<!-- APP -->
 <div id="app" class="app">
     <div class="sidebar"> 
         <h3>INNO</h3>
@@ -91,9 +93,11 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
+            <!-- ÚROVEŇ 1: ISO -->
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">
                 📁 Úroveň 1: ISO <span id="arrow-cat-iso">▼</span>
             </div>
@@ -120,6 +124,7 @@
                 </div>
             </div>
 
+            <!-- ÚROVEŇ 1: ISMS -->
             <div class="doc-category" onclick="toggleAccordion('cat-isms')">
                 📁 Úroveň 1: ISMS (Informačná bezpečnosť) <span id="arrow-cat-isms">▼</span>
             </div>
@@ -290,8 +295,12 @@ async function loadDocuments() {
     
     let signedDocs = [];
     if (isAdmin) {
-        const logSnap = await db.collection("logs").where("userEmail", "==", currentUser.email).get();
-        logSnap.forEach(l => signedDocs.push(l.data().docId));
+        try {
+            const logSnap = await db.collection("logs").where("userEmail", "==", currentUser.email).get();
+            logSnap.forEach(l => signedDocs.push(l.data().docId));
+        } catch (e) {
+            console.log("Poznámka k logom: " + e.message);
+        }
     }
 
     db.collection("documents").onSnapshot((snapshot) => {
@@ -301,7 +310,6 @@ async function loadDocuments() {
             const data = doc.data();
             const id = doc.id;
             
-            // Definitívne ošetrenie: Všetko na malé písmená pre 100% presnú identifikáciu ID elementu
             const catL1Clean = data.categoryL1.toString().toLowerCase();
             const catL2Clean = data.categoryL2.toString().toLowerCase();
             
@@ -341,6 +349,8 @@ async function loadDocuments() {
                 }
             }
         });
+    }, (error) => {
+        console.error("Chyba snapshotu dokumentov: ", error);
     });
 }
 
@@ -393,6 +403,8 @@ function loadDocumentHistory(docId) {
               `;
           });
           historyBox.innerHTML = html;
+      }, (error) => {
+          console.log("História zablokovaná pravidlami: " + error.message);
       });
 }
 
@@ -431,7 +443,7 @@ async function addDocumentLink(event, catL1, catL2) {
         await db.collection("documents").add({
             fileName: name,
             fileUrl: url,
-            categoryL1: catL1.toLowerCase(), // Ukladáme čisto malými písmenami pre perfektnú synchronizáciu
+            categoryL1: catL1.toLowerCase(), 
             categoryL2: catL2.toLowerCase(),
             uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
