@@ -33,23 +33,33 @@
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #2563eb; font-weight: normal; font-size: 0.95em;}
         .doc-item-list { margin: 5px 0; padding-left: 0; }
         
-        /* Krajší a výraznejší riadok dokumentu */
-        .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;}
-        .doc-item:hover { background: #475569; }
-        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .doc-item { background: #334155; padding: 12px; margin: 8px 0; border-radius: 8px; font-size: 1em; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
+        .doc-item a { color: #38bdf8; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; flex: 1; }
         .doc-item a:hover { text-decoration: underline; }
-        
-        /* Väčšia ikona súboru */
         .doc-icon { font-size: 1.4em; } 
         
-        .delete-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
+        /* Akčné tlačidlá pri dokumentoch */
+        .doc-actions { display: flex; gap: 8px; align-items: center; }
+        .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
         .delete-btn:hover { background: #dc2626; }
         
-        /* NOVÝ MENŠÍ A KOMPAKTNEJŠÍ FORMULÁR V JEDNOM RIADKU */
+        /* Tlačidlá pre Admina */
+        .confirm-btn { background: #475569; color: #cbd5e1; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: bold;}
+        .confirm-btn:hover { background: #64748b; color: white; }
+        .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: 1px solid #10b981; }
+        .history-btn { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em;}
+        .history-btn:hover { background: #0369a1; }
+
+        /* História prečítania pod dokumentom */
+        .read-history-box { background: #111827; border-radius: 6px; padding: 10px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #374151; color: #9ca3af;}
+        .history-row { padding: 4px 0; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between;}
+        .history-row:last-child { border-bottom: none; }
+
+        /* FORMULÁR V JEDNOM RIADKU */
         .add-link-box { display: flex; gap: 8px; background: #1e293b; padding: 8px; border-radius: 8px; margin-top: 10px; border: 1px dashed #475569; align-items: center;}
-        .add-link-box input { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px;}
-        .add-link-box input.url-field { flex: 2; } /* Políčko pre URL bude o niečo širšie */
-        .add-link-box button { width: auto; padding: 0 12px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981;}
+        .add-link-box input { flex: 1; padding: 6px 10px; margin: 0; border-radius: 6px; font-size: 0.85em; height: 32px; background: #334155; color: white; border: none;}
+        .add-link-box input.url-field { flex: 2; }
+        .add-link-box button { width: auto; padding: 0 12px; margin: 0; font-size: 0.85em; height: 32px; white-space: nowrap; background: #10b981; border: none; border-radius: 6px; color: white; cursor: pointer;}
         .add-link-box button:hover { background: #059669; }
     </style>
 </head>
@@ -188,6 +198,7 @@ auth.onAuthStateChanged(async (user) => {
         if (doc.exists) {
             currentUser = doc.data();
             currentUser.docId = doc.id;
+            currentUser.email = user.email.toLowerCase();
             
             document.getElementById("login").style.display = "none";
             document.getElementById("app").style.display = "block";
@@ -218,7 +229,6 @@ function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    // Vygenerujeme kompaktné formuláre
     document.querySelectorAll(".admin-upload-zone").forEach(zone => {
         const l1 = zone.getAttribute("data-l1");
         const l2 = zone.getAttribute("data-l2");
@@ -242,13 +252,11 @@ function applyRoleVisibility() {
     }
 }
 
-/* PREPÍNANIE ZÁLOŽIEK */
 function show(id) { 
     document.querySelectorAll(".content > div").forEach(d => d.style.display = "none");
     document.getElementById(id).style.display = "block";
 }
 
-/* ROZBAĽOVANIE KATEGÓRIÍ (ACCORDION) */
 function toggleAccordion(id) {
     const container = document.getElementById(id);
     const arrow = document.getElementById("arrow-" + id);
@@ -257,8 +265,18 @@ function toggleAccordion(id) {
     arrow.innerText = isVisible ? "▼" : "▲";
 }
 
-/* 📥 NAČÍTANIE DOKUMENTOV */
-function loadDocuments() {
+/* 📥 NAČÍTANIE DOKUMENTOV A LOGOV O PREČÍTANÍ (Zmena: len pre admina) */
+async function loadDocuments() {
+    const isAdmin = (currentUser && currentUser.role === 'admin');
+    const isHr = (currentUser && currentUser.role === 'hr');
+    
+    let signedDocs = [];
+    if (isAdmin) {
+        // Iba adminovi sťahujeme informácie o tom, čo už on sám potvrdil
+        const logSnap = await db.collection("logs").where("userEmail", "==", currentUser.email).get();
+        logSnap.forEach(l => signedDocs.push(l.data().docId));
+    }
+
     db.collection("documents").onSnapshot((snapshot) => {
         document.querySelectorAll(".doc-item-list").forEach(list => list.innerHTML = "");
 
@@ -269,109 +287,88 @@ function loadDocuments() {
             const targetList = document.getElementById(targetListId);
 
             if (targetList) {
-                const showDelete = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'hr'));
+                const hasRead = signedDocs.includes(id);
+
+                // Tlačidlo "Potvrdiť" vygenerujeme IBA vtedy, ak je to prihlásený Admin
+                let confirmButtonHtml = "";
+                if (isAdmin) {
+                    confirmButtonHtml = hasRead 
+                        ? `<span class="confirmed-status">✓ Prečítané & Porozumené</span>`
+                        : `<button class="confirm-btn" id="btn-confirm-${id}" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
+                }
+
                 const itemHtml = `
-                    <div class="doc-item">
-                        <a href="${data.fileUrl}" target="_blank">
-                            <span class="doc-icon">📄</span> 
-                            <span>${data.fileName}</span>
-                        </a>
-                        ${showDelete ? `<button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>` : ''}
+                    <div style="margin-bottom: 12px;">
+                        <div class="doc-item">
+                            <a href="${data.fileUrl}" target="_blank">
+                                <span class="doc-icon">📄</span> 
+                                <span>${data.fileName}</span>
+                            </a>
+                            <div class="doc-actions">
+                                ${confirmButtonHtml}
+                                ${isAdmin ? `<button class="history-btn" onclick="toggleHistoryVisibility('${id}')">📊 História</button>` : ''}
+                                ${(isAdmin || isHr) ? `<button class="delete-btn" onclick="deleteDocument('${id}')">Zmazať</button>` : ''}
+                            </div>
+                        </div>
+                        ${isAdmin ? `<div id="history-box-${docId = id}" class="read-history-box">⏳ Načítavam históriu...</div>` : ''}
                     </div>
                 `;
                 targetList.innerHTML += itemHtml;
+                
+                // Na pozadí načítame históriu podpisov len ak sme Admin
+                if (isAdmin) {
+                    loadDocumentHistory(id);
+                }
             }
         });
     });
 }
 
-/* 📤 PRIDANIE ODKAZU */
-async function addDocumentLink(catL1, catL2) {
-    const nameInput = document.getElementById(`name-${catL1}-${catL2}`);
-    const urlInput = document.getElementById(`url-${catL1}-${catL2}`);
-    
-    const name = nameInput.value.trim();
-    let url = urlInput.value.trim();
+/* 👁️ FUNKCIA: ZÁPIS POTVRDENIA O PREČÍTANÍ S ČASOVOU PEČIATKOU */
+async function confirmRead(docId, docName) {
+    if (!confirm(`Potvrdzujete, že ste dokumentu "${docName}" porozumeli a beriete ho na vedomie?`)) return;
 
-    if (!name || !url) {
-        alert("Prosím, vyplň názov aj odkaz.");
-        return;
-    }
-
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = "https://" + url;
-    }
+    const now = new Date();
+    const formattedDate = now.toLocaleString("sk-SK");
 
     try {
-        await db.collection("documents").add({
-            fileName: name,
-            fileUrl: url,
-            categoryL1: catL1,
-            categoryL2: catL2,
-            uploadedBy: currentUser ? currentUser.email : "neznámy"
+        await db.collection("logs").add({
+            docId: docId,
+            docName: docName,
+            userEmail: currentUser.email,
+            userName: currentUser.name || currentUser.email,
+            timestamp: formattedDate,
+            type: "Prečítané a Porozumené"
         });
 
-        alert("Dokument bol úspešne pridaný do intranetu!");
-        nameInput.value = "";
-        urlInput.value = "";
+        alert("Vaše potvrdenie bolo úspešne zaznamenané s časovou pečiatkou.");
+        loadDocuments();
     } catch (error) {
-        alert("Chyba pri ukladaní: " + error.message);
+        alert("Chyba pri ukladaní potvrdenia: " + error.message);
     }
 }
 
-/* ❌ VYMAZANIE ODKAZU */
-async function deleteDocument(docId) {
-    if (!confirm("Naozaj chcete tento odkaz vymazať?")) return;
-    try {
-        await db.collection("documents").doc(docId).delete();
-        alert("Odkaz bol vymazaný.");
-    } catch (error) {
-        alert("Chyba pri mazaní: " + error.message);
-    }
-}
+/* 📊 NAČÍTANIE HISTÓRIE PRE KONKRÉTNY DOKUMENT (Iba pre Admina) */
+function loadDocumentHistory(docId) {
+    db.collection("logs")
+      .where("docId", "==", docId)
+      .where("type", "==", "Prečítané a Porozumené")
+      .onSnapshot((snapshot) => {
+          const historyBox = document.getElementById(`history-box-${docId}`);
+          if (!historyBox) return;
 
-/* ADMIN PANEL */
-async function loadAdmin() {
-    if (!currentUser || currentUser.role !== "admin") return;
-    const snap = await db.collection("users").get();
-    let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        const docId = doc.id;
-        html += `
-        <div class="admin-user-card"> 
-            <div><b>${u.name || 'Nepomenovaný užívateľ'}</b><br>${u.email}</div>
-            <div>
-                <label>Rola: </label>
-                <select onchange="updateUserRole('${docId}', this.value)">
-                    <option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option>
-                    <option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option>
-                    <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
-                </select>
-            </div>
-        </div> 
-        `; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
+          if (snapshot.empty) {
+              historyBox.innerHTML = "<i>Tento dokument zatiaľ nikto nepotvrdil ako prečítaný.</i>";
+              return;
+          }
 
-async function updateUserRole(docId, newRole) {
-    try {
-        await db.collection("users").doc(docId).update({ role: newRole });
-        alert("Rola bola úspešne zmenená!");
-        if (docId === currentUser.docId) {
-            currentUser.role = newRole;
-            applyRoleVisibility();
-            if (newRole !== 'admin') show('dashboard');
-        }
-    } catch (error) {
-        alert("Chyba pri zmene roly: " + error.message);
-    }
-}
-
-function logout() { 
-    auth.signOut().then(() => { currentUser = null; location.reload(); });
-}
-</script>
-</body>
-</html>
+          let html = "<b>Zoznam zamestnancov, ktorí dokument prečítali:</b><br>";
+          snapshot.forEach(log => {
+              const l = log.data();
+              html += `
+                  <div class="history-row">
+                      <span>👤 <b>${l.userName}</b> (${l.userEmail})</span>
+                      <span>⏱️ ${l.timestamp}</span>
+                  </div>
+              `;
+          });
