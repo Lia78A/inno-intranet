@@ -40,7 +40,7 @@
         .delete-btn:hover { background: #dc2626; }
 
         /* DRAG & DROP ZÓNA */
-        .drop-zone { background: rgba(37, 99, 235, 0.05); border: 2px dashed #334155; border-radius: 6px; padding: 15px; text-align: center; color: #94a3b8; font-size: 0.85em; cursor: pointer; margin-top: 10px; transition: all 0.2s ease;}
+        .drop-zone { background: rgba(37, 99, 235, 0.05); border: 2px dashed #475569; border-radius: 6px; padding: 12px; text-align: center; color: #94a3b8; font-size: 0.85em; cursor: pointer; margin-top: 10px; transition: all 0.2s ease;}
         .drop-zone:hover, .drop-zone.dragover { background: rgba(37, 99, 235, 0.15); border-color: #2563eb; color: white; }
         .drop-zone input[type="file"] { display: none; }
     </style>
@@ -211,32 +211,26 @@ function applyRoleVisibility() {
     document.getElementById("menu-admin").style.display = "block";
     document.getElementById("menu-hr").style.display = "block";
 
-    const isPowerUser = (currentUser.role === 'admin' || currentUser.role === 'hr');
-    
-    // Generovanie Drag & Drop zón iba pre Admina a HR
+    // Boxy na nahrávanie vygenerujeme VŽDY, aby sme ich videli
     document.querySelectorAll(".admin-upload-zone").forEach(zone => {
-        if (isPowerUser) {
-            const l1 = zone.getAttribute("data-l1");
-            const l2 = zone.getAttribute("data-l2");
-            const uniqueId = `file-${l1}-${l2}`;
-            
-            zone.innerHTML = `
-                <div class="drop-zone" onclick="document.getElementById('${uniqueId}').click()" id="zone-${l1}-${l2}">
-                    ➕ Potiahni sem súbor alebo klikni pre pridanie do sekcie ${l2}
-                    <input type="file" id="${uniqueId}" onchange="handleFileSelect('${l1}', '${l2}', this.files)">
-                </div>
-            `;
-            setupDragAndDrop(l1, l2);
-        } else {
-            zone.innerHTML = ""; // Bežný user nevidí nič na nahrávanie
-        }
+        const l1 = zone.getAttribute("data-l1");
+        const l2 = zone.getAttribute("data-l2");
+        const uniqueId = `file-${l1}-${l2}`;
+        
+        zone.innerHTML = `
+            <div class="drop-zone" onclick="document.getElementById('${uniqueId}').click()" id="zone-${l1}-${l2}">
+                ➕ Potiahni sem súbor alebo klikni pre pridanie do sekcie ${l2}
+                <input type="file" id="${uniqueId}" onchange="handleFileSelect('${l1}', '${l2}', this.files)">
+            </div>
+        `;
+        setupDragAndDrop(l1, l2);
     });
 
-    if (currentUser.role === "user") { 
+    if (currentUser && currentUser.role === "user") { 
         document.getElementById("menu-admin").style.display = "none"; 
         document.getElementById("menu-hr").style.display = "none"; 
     }
-    if (currentUser.role === "hr") { 
+    if (currentUser && currentUser.role === "hr") { 
         document.getElementById("menu-admin").style.display = "none"; 
     }
 }
@@ -296,7 +290,7 @@ function loadDocuments() {
             const targetList = document.getElementById(targetListId);
 
             if (targetList) {
-                const showDelete = (currentUser.role === 'admin' || currentUser.role === 'hr');
+                const showDelete = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'hr'));
                 const itemHtml = `
                     <div class="doc-item">
                         <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
@@ -333,14 +327,14 @@ async function handleFileSelect(catL1, catL2, files) {
             categoryL1: catL1,
             categoryL2: catL2,
             storagePath: storagePath,
-            uploadedBy: currentUser.email
+            uploadedBy: currentUser ? currentUser.email : "neznámy"
         });
 
         alert(`Súbor "${file.name}" bol úspešne pridaný do sekcie ${catL2}!`);
     } catch (error) {
         alert("Chyba pri nahrávaní: " + error.message);
     } finally {
-        applyRoleVisibility(); // Resetuje vzhľad zón spät na pôvodný text
+        applyRoleVisibility(); // Resetuje vzhľad zón späť na pôvodný text
     }
 }
 
@@ -358,7 +352,7 @@ async function deleteDocument(docId, storagePath) {
 
 /* ADMIN PANEL */
 async function loadAdmin() {
-    if (currentUser.role !== "admin") return;
+    if (!currentUser || currentUser.role !== "admin") return;
     const snap = await db.collection("users").get();
     let html = "";
     snap.forEach(doc => { 
@@ -396,7 +390,7 @@ async function updateUserRole(docId, newRole) {
 }
 
 function logout() { 
-    auth.signOut().then(() => { currentUser = null; });
+    auth.signOut().then(() => { currentUser = null; location.reload(); });
 }
 </script>
 </body>
