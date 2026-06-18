@@ -22,8 +22,8 @@
         .sidebar { width: 220px; background: #111827; padding: 20px; position: fixed; height: 100%; display: flex; flex-direction: column;}
         .content { margin-left: 240px; padding: 20px;}
         
-        /* 🔥 NOVÝ ŠTÝL PRE LOGO FIRMY */
-        .sidebar-logo-container { width: 100%; max-width: 160px; height: auto; margin-bottom: 15px; display: block;}
+        /* ŠTÝL PRE LOGO FIRMY */
+        .sidebar-logo-container { width: 100%; max-width: 140px; height: auto; margin-bottom: 15px; display: block;}
         .sidebar-logo-container img { width: 100%; height: auto; display: block;}
         
         /* STABILNÝ PROFIL V SIDEBARE */
@@ -84,6 +84,7 @@
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -93,12 +94,15 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
+        <!-- 🔥 FIX: Čistá, stabilná webová adresa loga bez zbytočných kódov -->
         <div class="sidebar-logo-container">
-            <img src="data:image/png;base64,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" alt="novis logo">
+            <img src="https://i.imgur.com/vHqB3qB.png" alt="novis logo">
         </div>
 
+        <!-- STABILNÝ PROFIL V SIDEBARE -->
         <div id="sidebar-user-box" class="sidebar-user-card">
             <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
             <div id="sidebar-user-role" class="sidebar-user-role">...</div>
@@ -119,6 +123,7 @@
             <div class="card" id="welcome"></div> 
         </div>
         
+        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -143,6 +148,7 @@
             </div>
         </div>
 
+        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
@@ -151,6 +157,7 @@
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
+            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -222,7 +229,7 @@ async function setupUserSession(emailStr) {
             // Dashboard
             document.getElementById("welcome").innerText = "Vitaj " + (currentUser.name || emailStr) + " (" + currentUser.role + ")";
             
-            // 🔥 VYČISTENIE PREHLIADAČA A OKAMŽITÉ VYKRESLENIE VIZITKY POD LOGOM NOVIS
+            // Zápis vizitky
             const finalName = currentUser.name || emailStr.split('@')[0];
             document.getElementById("sidebar-user-name").innerHTML = finalName;
             document.getElementById("sidebar-user-role").innerHTML = currentUser.role;
@@ -466,7 +473,7 @@ async function addDocumentLink(event, catL1, catL2) {
             if (params.has("file")) { finalName = params.get("file"); } 
             else if (params.has("id")) { finalName = params.get("id").substring(params.get("id").lastIndexOf('/') + 1); }
             if (!finalName) { finalName = decodeURIComponent(urlObj.pathname.substring(urlObj.pathname.lastIndexOf('/') + 1)); }
-        } catch (e) {}
+        } catch(e) {}
         if (!finalName || !finalName.includes(".")) { finalName = `Súbor_${catL1.toUpperCase()}_${catL2.charAt(0).toUpperCase() + catL2.slice(1)}.docx`; }
     } else { alert("Vlož odkaz alebo vyber súbor z PC."); return; }
     try {
@@ -483,7 +490,7 @@ async function renameDocument(docId, currentName) {
     if (!currentUser || currentUser.role !== "admin") return;
     let newName = prompt("Zadajte nový názov:", currentName);
     if (newName && newName.trim() && newName.trim() !== currentName) {
-        try { await db.collection("documents").doc(docId).update({ fileName: newName.trim() }); } catch (e) {}
+        try { await db.collection("documents").doc(docId).update({ fileName: newName.trim() }); } catch(e) {}
     }
 }
 
@@ -516,10 +523,10 @@ function loadDocumentHistory(docId) {
 async function deleteDocument(docId) {
     if (!currentUser || currentUser.role !== "admin") return;
     if (!confirm("Vymazať?")) return;
-    try { await db.collection("documents").doc(docId).delete(); } catch (e) {}
+    try { await db.collection("documents").doc(docId).delete(); } catch(e) {}
 }
 
-/* 🧭 POMOCNÉ FUNKCIE ROZHRANIA */
+/* POMOCNÉ FUNKCIE ROZHRANIA */
 function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
 
 function toggleAccordion(id) {
