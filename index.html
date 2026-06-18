@@ -84,7 +84,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login" class="login"> 
     <div class="box"> 
         <h2>INNO Login (v2)</h2>
@@ -94,15 +93,12 @@
     </div>
 </div>
 
-<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app" class="app">
     <div class="sidebar"> 
-        <!-- 🔥 FIX: Názov súboru opravený presne podľa tvojej štruktúry na GitHube -->
         <div class="sidebar-logo-container">
-            <img src="inno_proj.png" id="sidebar-main-logo" alt="novis logo" onerror="this.onerror=null; this.src='https://images.squarespace-cdn.com/content/v1/5f1966a347b59368ca1794b6/1596706037610-SUL0P95PGLN79B27Y47M/Innovis_logo_RGB.png';">
+            <img src="inno_proj.png/inno_proj.png" id="sidebar-main-logo" alt="novis logo" onerror="this.onerror=null; this.src='https://images.squarespace-cdn.com/content/v1/5f1966a347b59368ca1794b6/1596706037610-SUL0P95PGLN79B27Y47M/Innovis_logo_RGB.png';">
         </div>
 
-        <!-- STABILNÝ PROFIL V SIDEBARE -->
         <div id="sidebar-user-box" class="sidebar-user-card">
             <div id="sidebar-user-name" class="sidebar-user-name">Načítavam...</div>
             <div id="sidebar-user-role" class="sidebar-user-role">...</div>
@@ -123,7 +119,6 @@
             <div class="card" id="welcome"></div> 
         </div>
         
-        <!-- ZÁLOŽKA DOKUMENTY -->
         <div id="docs" style="display:none;"> 
             <h2>Dokumentácia spoločnosti</h2> 
             
@@ -148,7 +143,6 @@
             </div>
         </div>
 
-        <!-- ZÁLOŽKA KNIŽNICA -->
         <div id="library" style="display:none;"> 
             <h2>Interná knižnica INNO</h2> 
             
@@ -157,7 +151,6 @@
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" class="nuclino-go-link">Vstúpiť ↗</a>
             </div>
 
-            <!-- SÚKROMNÝ ARCHÍV -->
             <div class="doc-category doc-category-clickable" id="folder-lib-private" style="display:none;" onclick="toggleAccordion('cat-lib-private')">
                 <span>🔒 Úroveň 1: Súkromný archív (Riadený prístup)</span> <span id="arrow-cat-lib-private">▼</span>
             </div>
@@ -240,7 +233,7 @@ async function setupUserSession(emailStr) {
             loadLibrary();
             show('dashboard');
         } else { alert("V databáze chýba profil: " + emailStr); logout(); }
-    } catch(e) { alert("Kritická chyba siete: " + e.message); }
+    } catch(e) { alert("Kritická chyba XML siete: " + e.message); }
 }
 
 function applyRoleVisibility() {
@@ -506,56 +499,4 @@ async function confirmRead(docId, docName) {
     } catch (error) { alert(error.message); }
 }
 
-function loadDocumentHistory(docId) {
-    if (!currentUser || currentUser.role !== "admin") return;
-    db.collection("logs").where("docId", "==", docId).where("type", "==", "Prečítané a Porozumené").onSnapshot((snapshot) => {
-        const historyBox = document.getElementById(`history-box-${docId}`);
-        if (!historyBox) return;
-        if (snapshot.empty) { historyBox.innerHTML = "<i>Zatiaľ neprečítané.</i>"; return; }
-        let html = "<b>Prečítali:</b><br>";
-        snapshot.forEach(log => {
-            const l = log.data(); html += `<div class="history-row"><span>👤 <b>${l.userName}</b></span> <span>⏱️ ${l.timestamp}</span></div>`;
-        });
-        historyBox.innerHTML = html;
-    });
-}
-
-async function deleteDocument(docId) {
-    if (!currentUser || currentUser.role !== "admin") return;
-    if (!confirm("Vymazať?")) return;
-    try { await db.collection("documents").doc(docId).delete(); } catch(e) {}
-}
-
-/* POMOCNÉ FUNKCIE ROZHRANIA */
-function show(id) { document.querySelectorAll(".content > div").forEach(d => d.style.display = "none"); document.getElementById(id).style.display = "block"; }
-
-function toggleAccordion(id) {
-    const container = document.getElementById(id);
-    const arrow = document.getElementById("arrow-" + id);
-    const isVisible = container.style.display === "block";
-    container.style.display = isVisible ? "none" : "block";
-    if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
-}
-
-function toggleHistoryVisibility(docId) {
-    const box = document.getElementById(`history-box-${docId}`);
-    if (box) { box.style.display = box.style.display === "block" ? "none" : "block"; }
-}
-async function loadAdmin() {
-    if (!currentUser || currentUser.role !== "admin") return;
-    const snap = await db.collection("users").get();
-    let html = "";
-    snap.forEach(doc => { 
-        const u = doc.data();
-        html += `<div class="admin-user-card"><div><b>${u.name || u.email}</b><br>${u.email}</div><div><select onchange="updateUserRole('${doc.id}', this.value)"><option value="user" ${u.role === 'user' ? 'selected' : ''}>User</option><option value="hr" ${u.role === 'hr' ? 'selected' : ''}>HR</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></div></div>`; 
-    });
-    document.getElementById("users").innerHTML = html;
-}
-async function updateUserRole(docId, newRole) {
-    if (!currentUser || currentUser.role !== "admin") return;
-    try { await db.collection("users").doc(docId).update({ role: newRole }); alert("Zmenené."); } catch (e) {}
-}
-function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
+function loadDocumentHistory(docId
