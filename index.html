@@ -2,23 +2,46 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>INNO Firebase Intranet</title>
-    
+    <title>INNO Intranet</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; }
+        .login { height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .box { background: #1e293b; padding: 40px; border-radius: 12px; width: 300px; display: flex; flex-direction: column; align-items: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #334155; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
+        .app { display: none; display: flex; height: 100vh; }
+        .sidebar { width: 220px; background: #111827; padding: 20px; }
+        .content { flex-grow: 1; padding: 40px; }
+    </style>
 </head>
 <body>
 
-<div id="login">
-    <h2>Prihlásenie</h2>
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Heslo">
-    <button onclick="login()">Login</button>
+<div id="login" class="login">
+    <div class="box">
+        <h2 style="color:#38bdf8">NOVIS Intranet</h2>
+        <input id="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Heslo">
+        <button onclick="login()">Login</button>
+    </div>
+</div>
+
+<div id="app" class="app">
+    <div class="sidebar">
+        <h3>Menu</h3>
+        <div onclick="logout()" style="cursor:pointer; color:#38bdf8;">Odhlásiť</div>
+    </div>
+    <div class="content">
+        <h1>Vitaj v systéme</h1>
+        <p>Ak vidíš tento text, prihlásenie prebehlo úspešne.</p>
+    </div>
 </div>
 
 <script>
-    // Konfigurácia
+    // 3. KONFIGURÁCIA A INICIALIZÁCIA
     const firebaseConfig = {
         apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
         authDomain: "inno-intranet.firebaseapp.com",
@@ -28,21 +51,32 @@
         appId: "1:816972324613:web:81429910b0de1e4cbda16c"
     };
 
-    // Inicializácia až po načítaní knižníc
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // 4. LOGIKA
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+        } else {
+            document.getElementById('login').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+        }
+    });
 
     async function login() {
         const email = document.getElementById("email").value.trim().toLowerCase();
         const password = document.getElementById("password").value;
         try {
             await auth.signInWithEmailAndPassword(email, password);
-            location.reload(); 
         } catch(e) {
-            alert("Chyba prihlásenia: " + e.message);
+            alert("Chyba: " + e.message);
         }
     }
+
+    function logout() { auth.signOut(); }
 </script>
 </body>
 </html>
