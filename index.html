@@ -2,55 +2,44 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>INNO Firebase Intranet - Oprava</title>
+    <title>INNO Intranet - Debug</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1e293b; padding: 30px; border-radius: 12px; width: 300px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; }
-    </style>
 </head>
 <body>
-
-<div id="login" class="box">
-    <h2>INNO Prihlásenie</h2>
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Heslo">
-    <button onclick="login()">Login</button>
-</div>
-
-<div id="app" style="display:none;">
-    <h1>Vitaj v intranete!</h1>
-    <button onclick="logout()">Odhlásiť</button>
-</div>
+    <div id="login">
+        <input id="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Heslo">
+        <button onclick="login()">Login</button>
+    </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
-        authDomain: "inno-intranet.firebaseapp.com",
-        projectId: "inno-intranet",
-        storageBucket: "inno-intranet.firebasestorage.app",
-        messagingSenderId: "816972324613",
-        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
-    };
+    const firebaseConfig = { /* tvoja konfigurácia zostáva rovnaká */ };
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     async function login() {
         const email = document.getElementById("email").value.trim().toLowerCase();
         const password = document.getElementById("password").value;
+        
         try {
-            await firebase.auth().signInWithEmailAndPassword(email, password);
-            alert("Úspešne prihlásený!");
-            location.reload();
+            console.log("Pokúšam sa prihlásiť:", email);
+            const user = await firebase.auth().signInWithEmailAndPassword(email, password);
+            console.log("Auth úspešná, hľadám profil v DB...");
+            
+            const snap = await db.collection("users").where("email", "==", email).get();
+            
+            if (snap.empty) {
+                alert("Prihlásenie Auth OK, ale e-mail '" + email + "' nie je v tabuľke 'users'!");
+            } else {
+                alert("Všetko OK, profil nájdený!");
+                location.reload();
+            }
         } catch(e) {
-            alert("Chyba prihlásenia: " + e.message);
+            alert("Chyba: " + e.message);
         }
     }
-
-    function logout() { firebase.auth().signOut().then(() => location.reload()); }
 </script>
 </body>
 </html>
