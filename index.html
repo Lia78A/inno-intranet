@@ -1,47 +1,72 @@
-<!-- LOGIN -->
-<div id="login" class="login">
-    <div class="box">
-        <!-- Logo umiestnené nad poľami -->
-        <div class="login-logo">
-            <img src="inno_proj.png" alt="Logo firmy" style="width: 150px; display: block; margin: 0 auto 20px;">
-        </div>
-        
-        <h2 style="text-align: center; color: white;">Prihlásenie</h2>
-        
-        <!-- Inputy sú vďaka CSS (flex-direction: column) automaticky pod sebou -->
-        <input id="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Heslo">
-        <button type="button" onclick="login()">Login</button>
-    </div>
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>INNO Intranet</title>
+    <style>
+        /* Tmavomodré pozadie pre celú stránku */
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif; 
+            background-color: #0f172a; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        .box { 
+            background: #1e293b; 
+            padding: 40px; 
+            border-radius: 12px; 
+            width: 300px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: none; 
+            background: #334155; 
+            color: white; 
+            box-sizing: border-box; 
+        }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: #2563eb; 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        /* Čisté logo bez pozadia */
+        .logo-svg { width: 160px; height: auto; margin-bottom: 20px; fill: #38bdf8; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <!-- SVG Logo - je priehľadné a nikdy nebude mať biele pozadie -->
+    <svg class="logo-svg" viewBox="0 0 160 40">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
+    </svg>
+    
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Heslo">
+    <button onclick="login()">Login</button>
 </div>
 
-<style>
-    /* Upravený štýl pre box, aby boli prvky pod sebou */
-    .box { 
-        background: #1e293b; 
-        padding: 30px; 
-        border-radius: 12px; 
-        width: 300px; 
-        display: flex; 
-        flex-direction: column; /* Toto zabezpečí, že všetko bude pod sebou */
-        align-items: center;    /* Vycentrovanie loga a tlačidla */
+<script>
+    function login() {
+        alert("Prihlasovanie bude fungovať po pridaní Firebase logiky.");
     }
-    .box input { 
-        width: 100%; 
-        padding: 12px; 
-        margin: 8px 0; 
-        border-radius: 8px; 
-        border: none; 
-        box-sizing: border-box; 
-    }
-    .box button { 
-        width: 100%; 
-        padding: 12px; 
-        background: #2563eb; 
-        border: none; 
-        border-radius: 8px; 
-        color: white; 
-        cursor: pointer; 
-        margin-top: 10px; 
-    }
-</style>
+</script>
+</body>
+</html>
