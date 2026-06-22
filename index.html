@@ -2,50 +2,43 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>INNO Intranet - Kompletný</title>
+    <title>INNO Intranet - Verzia 58</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { margin: 0; font-family: sans-serif; background: #0f172a; color: white; }
-        .login { height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .box { background: #1e293b; padding: 40px; border-radius: 12px; width: 300px; display: flex; flex-direction: column; align-items: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #334155; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-        
-        #app { display: none; height: 100vh; display: flex; }
-        .sidebar { width: 220px; background: #111827; padding: 20px; }
-        .sidebar div { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; }
-        .sidebar div:hover { background: #1e293b; }
-        .content { flex-grow: 1; padding: 40px; }
-        .section { display: none; }
+        .sidebar { width: 220px; background: #111827; height: 100vh; position: fixed; padding: 20px; }
+        .content { margin-left: 260px; padding: 20px; }
+        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; cursor: pointer; }
+        .doc-item { background: #334155; padding: 10px; margin: 5px 0; border-radius: 6px; display: flex; justify-content: space-between; }
+        .confirm-btn { background: #10b981; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .confirmed-status { color: #10b981; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="login" class="login">
-    <div class="box">
-        <h2>INNO Intranet</h2>
-        <input id="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Heslo">
+<div id="login" style="height:100vh; display:flex; justify-content:center; align-items:center;">
+    <div class="box" style="background:#1e293b; padding:40px; border-radius:12px;">
+        <input id="email" placeholder="Email"><br>
+        <input id="password" type="password" placeholder="Heslo"><br>
         <button onclick="login()">Login</button>
     </div>
 </div>
 
-<div id="app">
+<div id="app" style="display:none; display:flex;">
     <div class="sidebar">
-        <h3>Menu</h3>
         <div onclick="show('dashboard')">Dashboard</div>
-        <div onclick="show('hr')">HR a Mzdy</div>
-        <div onclick="show('library')">Knižnica</div>
         <div onclick="show('docs')">Dokumenty</div>
-        <div onclick="logout()" style="color:#ef4444; margin-top:20px;">Odhlásiť</div>
+        <div onclick="logout()">Odhlásiť</div>
     </div>
     <div class="content">
-        <div id="dashboard" class="section" style="display:block;"><h2>Dashboard</h2><p>Vitaj v systéme.</p></div>
-        <div id="hr" class="section"><h2>HR a Mzdy</h2><p>Tu nájdeš mzdové podklady.</p></div>
-        <div id="library" class="section"><h2>Knižnica</h2><p>Odborná literatúra a zdroje.</p></div>
-        <div id="docs" class="section"><h2>Dokumenty</h2><div id="doc-list"></div></div>
+        <div id="dashboard"><h2>Dashboard</h2><div id="welcome"></div></div>
+        <div id="docs" style="display:none;">
+            <h2>Dokumentácia</h2>
+            <div class="doc-category" onclick="toggle('cat-iso')">📁 ISO (Úroveň 1)</div>
+            <div id="cat-iso" style="display:none;"><div id="list-iso"></div></div>
+        </div>
     </div>
 </div>
 
@@ -67,6 +60,7 @@
         if (user) {
             document.getElementById('login').style.display = 'none';
             document.getElementById('app').style.display = 'flex';
+            loadUser(user.email);
         } else {
             document.getElementById('login').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
@@ -76,14 +70,47 @@
     async function login() {
         try {
             await auth.signInWithEmailAndPassword(document.getElementById("email").value.trim().toLowerCase(), document.getElementById("password").value);
-        } catch(e) { alert("Chyba: " + e.message); }
+        } catch(e) { alert(e.message); }
+    }
+
+    async function loadUser(email) {
+        const snap = await db.collection("users").where("email", "==", email.toLowerCase()).get();
+        if(!snap.empty) {
+            const user = snap.docs[0].data();
+            document.getElementById('welcome').innerText = "Vitaj, " + user.name;
+            loadDocs(user.email);
+        }
+    }
+
+    async function loadDocs(email) {
+        // Načítanie potvrdených dokumentov
+        const logs = await db.collection("logs").where("userEmail", "==", email).get();
+        const signedIds = logs.docs.map(l => l.data().docId);
+
+        db.collection("documents").onSnapshot(snap => {
+            let html = "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                const isSigned = signedIds.includes(doc.id);
+                html += `<div class="doc-item">
+                    <span>${data.fileName}</span>
+                    ${isSigned ? '<span class="confirmed-status">✓ Potvrdené</span>' : `<button class="confirm-btn" onclick="confirmDoc('${doc.id}', '${data.fileName}', '${email}')">Potvrdiť</button>`}
+                </div>`;
+            });
+            document.getElementById('list-iso').innerHTML = html;
+        });
+    }
+
+    async function confirmDoc(id, name, email) {
+        await db.collection("logs").add({ docId: id, docName: name, userEmail: email, timestamp: new Date().toLocaleString() });
+        location.reload();
     }
 
     function show(id) {
-        document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
+        document.getElementById('dashboard').style.display = (id === 'dashboard') ? 'block' : 'none';
+        document.getElementById('docs').style.display = (id === 'docs') ? 'block' : 'none';
     }
-
+    function toggle(id) { document.getElementById(id).style.display = (document.getElementById(id).style.display === 'block') ? 'none' : 'block'; }
     function logout() { auth.signOut(); }
 </script>
 </body>
