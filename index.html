@@ -34,14 +34,14 @@
         .menu-item:hover { background: #1f2937; color: #38bdf8; }
         .active-menu { background: #1e293b; color: #38bdf8; }
 
-        /* BLOKY NA DASHBOARDU */
+        /* BLOKY */
         .dashboard-block { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; }
 
         /* STRUKTÚRA AKORDIONU */
-        .doc-category { background: #111827; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid #1e293b; }
-        .doc-category:hover { background: #1f2937; }
+        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid #334155; }
+        .doc-category:hover { background: #334155; }
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
-        .doc-subcategory { background: #111827; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
+        .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
         /* FILE ROW */
         .file-row { background: #334155; padding: 12px; margin: 6px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
@@ -81,7 +81,8 @@
         
         <div class="menu-title">Sekcie 1. úrovne</div>
         <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Dashboard</div>
-        <div id="m-attendance" class="menu-item" onclick="showSection('attendance')">Dochádzka</div>
+        <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
+        <div id="m-administration" class="menu-item" onclick="showSection('administration')">Administrácia</div>
         <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR</div>
         <div id="m-others" class="menu-item" onclick="showSection('others')">Iné</div>
         
@@ -95,6 +96,10 @@
         
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                <h3>Vitaj v internom systéme spoločnosti INNO</h3>
+                <p>Prehľad dokumentácie a prístup k zložkám nájdeš v príslušných sekciách v ľavom menu.</p>
+            </div>
             
             <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -103,32 +108,32 @@
                 </div>
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
             </div>
+        </div>
 
-            <div class="dashboard-block">
-                <h3 style="color: #38bdf8; margin-top:0;">📁 Firemná Dokumentácia</h3>
-                <p style="color:#94a3b8;">Prehľad, správa a potvrdzovanie prečítania dokumentov druhej úrovne.</p>
-                
-                <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
-                <div id="cat-iso" class="subcategory-container">
-                    <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-iso-politika"></div><div id="upload-iso-politika"></div></div>
-                    <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-iso-ciele"></div><div id="upload-iso-ciele"></div></div>
-                    <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-iso-smernice"></div><div id="upload-iso-smernice"></div></div>
-                    <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine"></div><div id="upload-iso-ine"></div></div>
-                </div>
+        <div id="docs" class="section-panel">
+            <h2>Sekcia: Dokumenty</h2>
+            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania a správa súborov.</p>
+            
+            <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
+            <div id="cat-iso" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-iso-politika"></div><div id="upload-iso-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-iso-ciele"></div><div id="upload-iso-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-iso-smernice"></div><div id="upload-iso-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine"></div><div id="upload-iso-ine"></div></div>
+            </div>
 
-                <div class="doc-category" onclick="toggleAccordion('cat-isms')">📁 Úroveň 2: ISMS (Bezpečnosť) <span id="arrow-cat-isms">▼</span></div>
-                <div id="cat-isms" class="subcategory-container">
-                    <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-isms-politika"></div><div id="upload-isms-politika"></div></div>
-                    <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele"></div><div id="upload-isms-ciele"></div></div>
-                    <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice"></div><div id="upload-isms-smernice"></div></div>
-                    <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine"></div><div id="upload-isms-ine"></div></div>
-                </div>
+            <div class="doc-category" onclick="toggleAccordion('cat-isms')">📁 Úroveň 2: ISMS (Bezpečnosť) <span id="arrow-cat-isms">▼</span></div>
+            <div id="cat-isms" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-isms-politika"></div><div id="upload-isms-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele"></div><div id="upload-isms-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice"></div><div id="upload-isms-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine"></div><div id="upload-isms-ine"></div></div>
             </div>
         </div>
         
-        <div id="attendance" class="section-panel">
-            <h2>Sekcia: Dochádzka</h2>
-            <p>Prehľad všetkých registrovaných používateľov a správa ich prístupových rolí:</p>
+        <div id="administration" class="section-panel">
+            <h2>Sekcia: Administrácia</h2>
+            <p>Prehľad všetkých registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
             <div id="all-users-list">Načítavam zoznam kolegov...</div>
         </div>
         
@@ -307,87 +312,3 @@
     }
 
     function loadDocuments() {
-        db.collection("documents").onSnapshot((snapshot) => {
-            const lists = [
-                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
-                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine",
-                "hr-mzdy", "hr-zmluvy"
-            ];
-            lists.forEach(id => {
-                const el = document.getElementById(`list-${id}`);
-                if(el) el.innerHTML = "";
-            });
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const id = doc.id;
-                if (!data.fileName) return;
-
-                const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
-                if (targetElement) {
-                    const hasRead = loggedInUserLogs.includes(id);
-                    let actionHtml = hasRead 
-                        ? `<span class="confirmed-status">✓ Prečítané</span>`
-                        : `<button class="confirm-btn" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
-                    
-                    const canDelete = (currentUser.role === 'admin') || (currentUser.role === 'hr' && data.categoryL1 === 'hr');
-                    let deleteHtml = canDelete 
-                        ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
-                        : '';
-
-                    targetElement.innerHTML += `
-                        <div class="file-row">
-                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
-                            <div>${actionHtml}${deleteHtml}</div>
-                        </div>
-                    `;
-                }
-            });
-        });
-    }
-
-    async function confirmRead(docId, docName) {
-        if (!currentUser) return;
-        if (!confirm(`Rozumiem a potvrdzujem prečítanie dokumentu: ${docName}`)) return;
-        try {
-            await db.collection("logs").add({
-                docId: docId,
-                docName: docName,
-                userEmail: currentUser.email,
-                userName: currentUser.name || currentUser.email,
-                timestamp: new Date().toLocaleString("sk-SK"),
-                type: "Prečítané a Porozumené"
-            });
-            alert("Potvrdené!");
-            setupUserSession(currentUser.email);
-        } catch (e) { alert(e.message); }
-    }
-
-    async function deleteDoc(id) {
-        if(!confirm("Naozaj vymazať tento dokument?")) return;
-        try { await db.collection("documents").doc(id).delete(); } catch(e) {}
-    }
-
-    function showSection(id) {
-        document.querySelectorAll(".section-panel").forEach(s => s.style.display = "none");
-        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
-        
-        const panel = document.getElementById(id);
-        const menuItem = document.getElementById("m-" + id);
-        if(panel) panel.style.display = "block";
-        if(menuItem) menuItem.classList.add("active-menu");
-    }
-
-    function toggleAccordion(id) {
-        const container = document.getElementById(id);
-        const arrow = document.getElementById("arrow-" + id);
-        if(!container) return;
-        const isVisible = container.style.display === "block";
-        container.style.display = isVisible ? "none" : "block";
-        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
-    }
-
-    function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
