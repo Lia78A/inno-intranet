@@ -37,7 +37,7 @@
         /* BLOKY NA DASHBOARDU */
         .dashboard-block { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; }
 
-        /* STRUKTÚRA AKORDIONU (2. ÚROVEŇ) */
+        /* STRUKTÚRA AKORDIONU */
         .doc-category { background: #111827; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid #1e293b; }
         .doc-category:hover { background: #1f2937; }
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
@@ -50,9 +50,10 @@
         .confirm-btn:hover { background: #64748b; }
         .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: 1px solid #10b981; }
 
-        /* ZOZNAM UŽÍVATEĽOV V DOCHÁDZKE */
+        /* ZOZNAM UŽÍVATEĽOV + ROLE SELECT */
         .user-row { background: #1e293b; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #38bdf8; }
         .user-row .u-email { color: #64748b; font-size: 0.9em; }
+        .role-select { background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; outline: none; }
 
         /* MODERNÁ SPINKA NA PRIDANIE SÚBORU */
         .paperclip-btn { background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; }
@@ -127,7 +128,7 @@
         
         <div id="attendance" class="section-panel">
             <h2>Sekcia: Dochádzka</h2>
-            <p>Prehľad všetkých registrovaných používateľov v systéme:</p>
+            <p>Prehľad všetkých registrovaných používateľov a správa ich prístupových rolí:</p>
             <div id="all-users-list">Načítavam zoznam kolegov...</div>
         </div>
         
@@ -205,28 +206,3 @@
                 
                 const finalName = currentUser.name || emailStr.split('@')[0];
                 document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${userRole}</span>)`;
-                
-                if (userRole === "hr" || userRole === "admin") {
-                    document.getElementById("m-hr").style.display = "block";
-                } else {
-                    document.getElementById("m-hr").style.display = "none";
-                }
-                
-                const logSnap = await db.collection("logs").where("userEmail", "==", emailStr).get();
-                loggedInUserLogs = logSnap.docs.map(l => l.data().docId);
-
-                applyUploadZones();
-                loadAllUsers();
-                loadDocuments();
-            } else {
-                alert("Email '" + emailStr + "' neexistuje v kolekcii 'users'!");
-                logout();
-            }
-        } catch(e) { alert("Chyba: " + e.message); }
-    }
-
-    function loadAllUsers() {
-        db.collection("users").onSnapshot((snapshot) => {
-            const listContainer = document.getElementById("all-users-list");
-            if (!listContainer) return;
-            list
