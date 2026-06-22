@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
+    <!-- STABILNÉ KNIŽNICE V HEAD -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -41,9 +42,17 @@
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
-        /* FILE ROW */
-        .file-row { background: #334155; padding: 12px; margin: 6px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .file-row a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        /* FILE ROW A VNÚTORNÁ HISTÓRIA */
+        .file-card { background: #334155; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+        .file-row-main { display: flex; justify-content: space-between; align-items: center; }
+        .file-card a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        
+        /* MINI LOG PRE ADMINA PRI DOKUMENTE */
+        .doc-admin-logs { background: #1e293b; border-radius: 4px; padding: 8px 12px; font-size: 0.85em; border-left: 3px solid #10b981; margin-top: 4px; }
+        .doc-admin-logs-title { color: #10b981; font-weight: bold; margin-bottom: 4px; display: block; }
+        .log-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-item:last-child { border-bottom: none; }
+
         .confirm-btn { background: #475569; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
         .confirm-btn:hover { background: #64748b; }
         .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: 1px solid #10b981; }
@@ -52,12 +61,6 @@
         .user-row { background: #1e293b; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #38bdf8; }
         .user-row .u-email { color: #64748b; font-size: 0.9em; }
         .role-select { background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; outline: none; }
-
-        /* TABUĽKA PRE ADMINA */
-        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1e293b; border-radius: 8px; overflow: hidden; }
-        .admin-table th, .admin-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; }
-        .admin-table th { background: #111827; color: #38bdf8; font-size: 0.9em; text-transform: uppercase; }
-        .admin-table tr:hover { background: #24334d; }
 
         /* MODERNÁ SPINKA */
         .paperclip-btn { background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; }
@@ -68,6 +71,7 @@
 </head>
 <body>
 
+<!-- PRIHLASOVACIA STRÁNKA -->
 <div id="login" class="login-page">
     <div class="login-box">
         <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
@@ -79,6 +83,7 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app">
     <div class="sidebar">
         <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
@@ -99,6 +104,7 @@
             <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
         </div>
         
+        <!-- DASHBOARD -->
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
             <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;">
@@ -107,9 +113,10 @@
             </div>
         </div>
 
+        <!-- DOKUMENTY (ISO / ISMS) -->
         <div id="docs" class="section-panel">
             <h2>Sekcia: Dokumenty</h2>
-            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania and správa súborov.</p>
+            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania a správa súborov.</p>
             
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
             <div id="cat-iso" class="subcategory-container">
@@ -128,6 +135,7 @@
             </div>
         </div>
 
+        <!-- KNIŽNICA -->
         <div id="library" class="section-panel">
             <h2>Sekcia: Knižnica (Nuclino)</h2>
             <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
@@ -139,30 +147,14 @@
             </div>
         </div>
         
+        <!-- ADMINISTRÁCIA (STARÁ TABUĽKA ODSTRÁNENÁ) -->
         <div id="administration" class="section-panel">
             <h2>Sekcia: Administrácia</h2>
             <p>Prehľad registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
-            <div id="all-users-list" style="margin-bottom: 30px;">Načítavam zoznam kolegov...</div>
-            
-            <div id="admin-logs-view" style="display: none;">
-                <h3 style="color: #10b981; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">👁️ Prehľad: Potvrdenia o prečítaní a porozumení</h3>
-                <p style="color:#94a3b8; font-size:0.9em;">Reálny zoznam zamestnancov, ktorí klikli na tlačidlo potvrdenia pri dokumentoch:</p>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Meno / Užívateľ</th>
-                            <th>E-mail</th>
-                            <th>Názov dokumentu</th>
-                            <th>Dátum a Čas potvrdenia</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body">
-                        <tr><td colspan="4" style="color:#64748b;">Čakám na načítanie záznamov...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+            <div id="all-users-list">Načítavam zoznam kolegov...</div>
         </div>
         
+        <!-- HR SEKCE -->
         <div id="hr" class="section-panel">
             <h2>Sekcia: HR a Personálne zložky</h2>
             <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
@@ -176,6 +168,7 @@
             </div>
         </div>
 
+        <!-- INÉ -->
         <div id="others" class="section-panel">
             <h2>Sekcia: Iné</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
@@ -199,8 +192,11 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    
     let currentUser = null;
     let loggedInUserLogs = [];
+    let loadedDocumentsCache = [];
+    let globalReadingLogsCache = []; // Nová cache pamäť pre ukladanie všetkých potvrdení z DB
 
     auth.onAuthStateChanged((user) => {
         if (user) {
@@ -217,9 +213,7 @@
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { 
-            alert("Chyba prihlásenia (Auth): " + err.message); 
-        }
+        } catch(err) { alert("Chyba prihlásenia (Auth): " + err.message); }
     }
 
     async function setupUserSession(emailStr) {
@@ -251,42 +245,25 @@
 
                 applyUploadZones();
                 loadAllUsers();
-                loadDocuments();
                 
+                // 🔥 ZMENA: Ak je admin, načítame globálne logy do pamäte skôr než začneme kresliť dokumenty
                 if (userRole === "admin") {
-                    document.getElementById("admin-logs-view").style.display = "block";
-                    loadGlobalReadingLogs();
+                    db.collection("logs").onSnapshot((logSnapshot) => {
+                        globalReadingLogsCache = [];
+                        logSnapshot.forEach(doc => {
+                            globalReadingLogsCache.push(doc.data());
+                        });
+                        loadDocuments(); // Zavoláme až po uložení logov
+                    });
+                } else {
+                    loadDocuments();
                 }
+
             } else {
                 alert("Email '" + emailStr + "' neexistuje v databáze users!");
                 logout();
             }
         } catch(e) { alert("Chyba databázy: " + e.message); }
-    }
-
-    function loadGlobalReadingLogs() {
-        db.collection("logs").onSnapshot((snapshot) => {
-            const tbody = document.getElementById("admin-table-body");
-            if (!tbody) return;
-            tbody.innerHTML = "";
-
-            if(snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="4" style="color:#64748b; text-align:center;">Zatiaľ žiadny dokument nebol potvrdený ako prečítaný.</td></tr>`;
-                return;
-            }
-
-            snapshot.forEach((doc) => {
-                const log = doc.data();
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>👤 ${log.userName || 'Zamestnanec'}</b></td>
-                        <td><span style="color:#94a3b8;">${log.userEmail}</span></td>
-                        <td><span style="color:#38bdf8; font-weight:bold;">📄 ${log.docName}</span></td>
-                        <td><span style="color:#10b981;">⏰ ${log.timestamp}</span></td>
-                    </tr>
-                `;
-            });
-        });
     }
 
     function loadAllUsers() {
@@ -356,6 +333,18 @@
         const selectedFile = inputElement.files[0];
         const autoFileName = selectedFile.name; 
         
+        const isDuplicate = loadedDocumentsCache.some(doc => 
+            doc.fileName === autoFileName && 
+            doc.categoryL1 === catL1 && 
+            doc.categoryL2 === catL2
+        );
+
+        if (isDuplicate) {
+            alert(`Upozornenie: Dokument s názvom "${autoFileName}" už v tejto sekcii existuje! Nahrávanie bolo prerušené.`);
+            inputElement.value = "";
+            return;
+        }
+        
         const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(autoFileName);
         try {
             await db.collection("documents").add({
@@ -369,6 +358,7 @@
         } catch(e) { alert("Chyba nahrávania: " + e.message); }
     }
 
+    /* 🔥 VYLEPŠENÉ: RENDER DOKUMENTOV + GENEROVANIE HISTÓRIE PRE ADMINA */
     function loadDocuments() {
         db.collection("documents").onSnapshot((snapshot) => {
             const lists = [
@@ -381,10 +371,18 @@
                 if(el) el.innerHTML = "";
             });
 
+            loadedDocumentsCache = [];
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const id = doc.id;
                 if (!data.fileName) return;
+
+                loadedDocumentsCache.push({
+                    fileName: data.fileName,
+                    categoryL1: data.categoryL1,
+                    categoryL2: data.categoryL2
+                });
 
                 const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
                 if (targetElement) {
@@ -398,10 +396,35 @@
                         ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
                         : '';
 
+                    // 🛠️ GENEROVANIE MINI-ZOZNAMU ČITATEĽOV PRE ADMINA
+                    let inlineLogsHtml = "";
+                    if (currentUser && currentUser.role === "admin") {
+                        // Prefiltrujeme cache logov, či patrí k tomuto konkrétnemu id dokumentu
+                        const matchingLogs = globalReadingLogsCache.filter(log => log.docId === id);
+                        
+                        if (matchingLogs.length > 0) {
+                            inlineLogsHtml = `<div class="doc-admin-logs"><span class="doc-admin-logs-title">👁️ Potvrdili prečítanie:</span>`;
+                            matchingLogs.forEach(log => {
+                                inlineLogsHtml += `
+                                    <div class="log-item">
+                                        <span>👤 <b>${log.userName}</b> (${log.userEmail})</span>
+                                        <span style="color:#10b981;">⏰ ${log.timestamp}</span>
+                                    </div>`;
+                            });
+                            inlineLogsHtml += `</div>`;
+                        } else {
+                            inlineLogsHtml = `<div class="doc-admin-logs" style="border-left: 3px solid #64748b; color:#64748b;">Zatiaľ nikto nepotvrdil prečítanie.</div>`;
+                        }
+                    }
+
+                    // Vložíme štruktúru karty dokumentu aj s vnútorným logom
                     targetElement.innerHTML += `
-                        <div class="file-row">
-                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
-                            <div>${actionHtml}${deleteHtml}</div>
+                        <div class="file-card">
+                            <div class="file-row-main">
+                                <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                                <div>${actionHtml}${deleteHtml}</div>
+                            </div>
+                            ${inlineLogsHtml}
                         </div>
                     `;
                 }
