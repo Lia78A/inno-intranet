@@ -71,7 +71,7 @@
         </svg>
         <input id="email" placeholder="Email (meno@inno.sk)">
         <input id="password" type="password" placeholder="Heslo">
-        <button onclick="handleSystemLogin()">Login</button>
+        <button onclick="login()">Login</button>
     </div>
 </div>
 
@@ -185,13 +185,16 @@
         }
     });
 
-    async function handleSystemLogin() {
+    /* REVERTNUTE NA STARÝ NÁZOV PRE CACHE */
+    async function login() {
         const email = document.getElementById("email").value.trim().toLowerCase();
         const password = document.getElementById("password").value;
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { alert("Chyba prihlásenia Auth: " + err.message); }
+        } catch(err) { 
+            alert("Chyba prihlásenia (Auth): " + err.message); 
+        }
     }
 
     async function setupUserSession(emailStr) {
@@ -225,10 +228,10 @@
                 loadAllUsers();
                 loadDocuments();
             } else {
-                alert("Email '" + emailStr + "' neexistuje v databáze users!");
+                alert("Úspešne overená, ale email '" + emailStr + "' chýba v databáze 'users'!");
                 logout();
             }
-        } catch(e) { alert("Chyba: " + e.message); }
+        } catch(e) { alert("Chyba databázy: " + e.message); }
     }
 
     function loadAllUsers() {
@@ -312,3 +315,87 @@
     }
 
     function loadDocuments() {
+        db.collection("documents").onSnapshot((snapshot) => {
+            const lists = [
+                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
+                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine",
+                "hr-mzdy", "hr-zmluvy"
+            ];
+            lists.forEach(id => {
+                const el = document.getElementById(`list-${id}`);
+                if(el) el.innerHTML = "";
+            });
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const id = doc.id;
+                if (!data.fileName) return;
+
+                const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
+                if (targetElement) {
+                    const hasRead = loggedInUserLogs.includes(id);
+                    let actionHtml = hasRead 
+                        ? `<span class="confirmed-status">✓ Prečítané</span>`
+                        : `<button class="confirm-btn" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
+                    
+                    const canDelete = (currentUser.role === 'admin') || (currentUser.role === 'hr' && data.categoryL1 === 'hr');
+                    let deleteHtml = canDelete 
+                        ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
+                        : '';
+
+                    targetElement.innerHTML += `
+                        <div class="file-row">
+                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                            <div>${actionHtml}${deleteHtml}</div>
+                        </div>
+                    `;
+                }
+            });
+        });
+    }
+
+    async function confirmRead(docId, docName) {
+        if (!currentUser) return;
+        if (!confirm(`Rozumiem a potvrdzujem prečítanie dokumentu: ${docName}`)) return;
+        try {
+            await db.collection("logs").add({
+                docId: docId,
+                docName: docName,
+                userEmail: currentUser.email,
+                userName: currentUser.name || currentUser.email,
+                timestamp: new Date().toLocaleString("sk-SK"),
+                type: "Prečítané a Porozumené"
+            });
+            alert("Potvrdené!");
+            setupUserSession(currentUser.email);
+        } catch (e) { alert(e.message); }
+    }
+
+    async function deleteDoc(id) {
+        if(!confirm("Naozaj vymazať tento dokument?")) return;
+        try { await db.collection("documents").doc(id).delete(); } catch(e) {}
+    }
+
+    function showSection(id) {
+        document.querySelectorAll(".section-panel").forEach(s => s.style.display = "none");
+        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
+        
+        const panel = document.getElementById(id);
+        const menuItem = document.getElementById("m-" + id);
+        if(panel) panel.style.display = "block";
+        if(menuItem) menuItem.classList.add("active-menu");
+    }
+
+    function toggleAccordion(id) {
+        const container = document.getElementById(id);
+        const arrow = document.getElementById("arrow-" + id);
+        if(!container) return;
+        const isVisible = container.style.display === "block";
+        container.style.display = isVisible ? "none" : "block";
+        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
+    }
+
+    function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
