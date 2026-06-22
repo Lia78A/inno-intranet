@@ -73,8 +73,8 @@
         <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
         </svg>
-        <input id="email" placeholder="Email (meno@inno.sk)">
-        <input id="password" type="password" placeholder="Heslo">
+        <input id="login-email" placeholder="Email (meno@inno.sk)">
+        <input id="login-password" type="password" placeholder="Heslo">
         <button onclick="login()">Login</button>
     </div>
 </div>
@@ -109,7 +109,7 @@
 
         <div id="docs" class="section-panel">
             <h2>Sekcia: Dokumenty</h2>
-            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania a správa súborov.</p>
+            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania and správa súborov.</p>
             
             <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
             <div id="cat-iso" class="subcategory-container">
@@ -212,12 +212,14 @@
     });
 
     async function login() {
-        const email = document.getElementById("email").value.trim().toLowerCase();
-        const password = document.getElementById("password").value;
+        const email = document.getElementById("login-email").value.trim().toLowerCase();
+        const password = document.getElementById("login-password").value;
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { alert("Chyba prihlásenia (Auth): " + err.message); }
+        } catch(err) { 
+            alert("Chyba prihlásenia (Auth): " + err.message); 
+        }
     }
 
     async function setupUserSession(emailStr) {
@@ -251,7 +253,6 @@
                 loadAllUsers();
                 loadDocuments();
                 
-                // 🔥 ODOMKNUTIE TABUĽKY PRE ADMINA
                 if (userRole === "admin") {
                     document.getElementById("admin-logs-view").style.display = "block";
                     loadGlobalReadingLogs();
@@ -263,7 +264,6 @@
         } catch(e) { alert("Chyba databázy: " + e.message); }
     }
 
-    /* 🔥 FUNKCIA NAČÍTAVANIA LOGOV O PREČÍTANÍ PRE TABUĽKU ADMINA */
     function loadGlobalReadingLogs() {
         db.collection("logs").onSnapshot((snapshot) => {
             const tbody = document.getElementById("admin-table-body");
@@ -351,4 +351,106 @@
         });
     }
 
-    async function handleFileSelect(inputElement, catL1, catL2)
+    async function handleFileSelect(inputElement, catL1, catL2) {
+        if (!inputElement.files || inputElement.files.length === 0) return;
+        const selectedFile = inputElement.files[0];
+        const autoFileName = selectedFile.name; 
+        
+        const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(autoFileName);
+        try {
+            await db.collection("documents").add({
+                fileName: autoFileName,
+                fileUrl: fallbackUrl,
+                categoryL1: catL1,
+                categoryL2: catL2,
+                uploadedBy: currentUser.email
+            });
+            inputElement.value = "";
+        } catch(e) { alert("Chyba nahrávania: " + e.message); }
+    }
+
+    function loadDocuments() {
+        db.collection("documents").onSnapshot((snapshot) => {
+            const lists = [
+                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
+                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine",
+                "hr-mzdy", "hr-zmluvy"
+            ];
+            lists.forEach(id => {
+                const el = document.getElementById(`list-${id}`);
+                if(el) el.innerHTML = "";
+            });
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const id = doc.id;
+                if (!data.fileName) return;
+
+                const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
+                if (targetElement) {
+                    const hasRead = loggedInUserLogs.includes(id);
+                    let actionHtml = hasRead 
+                        ? `<span class="confirmed-status">✓ Prečítané</span>`
+                        : `<button class="confirm-btn" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
+                    
+                    const canDelete = (currentUser.role === 'admin') || (currentUser.role === 'hr' && data.categoryL1 === 'hr');
+                    let deleteHtml = canDelete 
+                        ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
+                        : '';
+
+                    targetElement.innerHTML += `
+                        <div class="file-row">
+                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                            <div>${actionHtml}${deleteHtml}</div>
+                        </div>
+                    `;
+                }
+            });
+        });
+    }
+
+    async function confirmRead(docId, docName) {
+        if (!currentUser) return;
+        if (!confirm(`Rozumiem a potvrdzujem prečítanie dokumentu: ${docName}`)) return;
+        try {
+            await db.collection("logs").add({
+                docId: docId,
+                docName: docName,
+                userEmail: currentUser.email,
+                userName: currentUser.name || currentUser.email,
+                timestamp: new Date().toLocaleString("sk-SK"),
+                type: "Prečítané a Porozumené"
+            });
+            alert("Potvrdené!");
+            setupUserSession(currentUser.email);
+        } catch (e) { alert(e.message); }
+    }
+
+    async function deleteDoc(id) {
+        if(!confirm("Naozaj vymazať tento dokument?")) return;
+        try { await db.collection("documents").doc(id).delete(); } catch(e) {}
+    }
+
+    function showSection(id) {
+        document.querySelectorAll(".section-panel").forEach(s => s.style.display = "none");
+        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
+        
+        const panel = document.getElementById(id);
+        const menuItem = document.getElementById("m-" + id);
+        if(panel) panel.style.display = "block";
+        if(menuItem) menuItem.classList.add("active-menu");
+    }
+
+    function toggleAccordion(id) {
+        const container = document.getElementById(id);
+        const arrow = document.getElementById("arrow-" + id);
+        if(!container) return;
+        const isVisible = container.style.display === "block";
+        container.style.display = isVisible ? "none" : "block";
+        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
+    }
+
+    function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
