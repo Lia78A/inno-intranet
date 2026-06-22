@@ -34,10 +34,8 @@
         .menu-item:hover { background: #1f2937; color: #38bdf8; }
         .active-menu { background: #1e293b; color: #38bdf8; }
 
-        /* BLOKY */
-        .dashboard-block { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; }
-
-        /* STRUKTÚRA AKORDIONU */
+        /* BLOKY A STRUKTÚRA */
+        .dashboard-block { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; }
         .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; border: 1px solid #334155; }
         .doc-category:hover { background: #334155; }
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
@@ -82,6 +80,7 @@
         <div class="menu-title">Sekcie 1. úrovne</div>
         <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Dashboard</div>
         <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
+        <div id="m-library" class="menu-item" onclick="showSection('library')">Knižnica (Nuclino)</div>
         <div id="m-administration" class="menu-item" onclick="showSection('administration')">Administrácia</div>
         <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR</div>
         <div id="m-others" class="menu-item" onclick="showSection('others')">Iné</div>
@@ -96,17 +95,9 @@
         
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
-            <div style="background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                <h3>Vitaj v internom systéme spoločnosti INNO</h3>
-                <p>Prehľad dokumentácie a prístup k zložkám nájdeš v príslušných sekciách v ľavom menu.</p>
-            </div>
-            
-            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3 style="color: #38bdf8; margin-top:0;">🌐 Knižnica: NUCLINO</h3>
-                    <p style="margin-bottom:0; color:#94a3b8;">Prechod do firemnej encyklopédie a zdieľaných znalostí.</p>
-                </div>
-                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
+            <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;">
+                <h3 style="color: #38bdf8; margin-top:0;">Vitaj v internom systéme spoločnosti INNO</h3>
+                <p style="color: #94a3b8; margin-bottom:0; line-height: 1.6;">Všetky sekcie firemnej dokumentácie, prístup do znalostnej bázy Nuclino a administrácia zamestnaneckých rolí sú plne pripravené v bočnom navigatívnom paneli.</p>
             </div>
         </div>
 
@@ -128,6 +119,17 @@
                 <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele"></div><div id="upload-isms-ciele"></div></div>
                 <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice"></div><div id="upload-isms-smernice"></div></div>
                 <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine"></div><div id="upload-isms-ine"></div></div>
+            </div>
+        </div>
+
+        <div id="library" class="section-panel">
+            <h2>Sekcia: Knižnica (Nuclino)</h2>
+            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <div>
+                    <h3 style="color: #38bdf8; margin-top:0;">🌐 Firemná encyklopédia NUCLINO</h3>
+                    <p style="margin-bottom:0; color:#94a3b8;">Kliknutím na tlačidlo prejdete do externého prostredia zdieľaných znalostí Innovis.</p>
+                </div>
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s;">Vstúpiť do Nuclino ↗</a>
             </div>
         </div>
         
@@ -185,7 +187,6 @@
         }
     });
 
-    /* REVERTNUTE NA STARÝ NÁZOV PRE CACHE */
     async function login() {
         const email = document.getElementById("email").value.trim().toLowerCase();
         const password = document.getElementById("password").value;
@@ -228,7 +229,7 @@
                 loadAllUsers();
                 loadDocuments();
             } else {
-                alert("Úspešne overená, ale email '" + emailStr + "' chýba v databáze 'users'!");
+                alert("Email '" + emailStr + "' neexistuje v databáze users!");
                 logout();
             }
         } catch(e) { alert("Chyba databázy: " + e.message); }
