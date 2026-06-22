@@ -53,6 +53,12 @@
         .user-row .u-email { color: #64748b; font-size: 0.9em; }
         .role-select { background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; outline: none; }
 
+        /* TABUĽKA PRE ADMINA */
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1e293b; border-radius: 8px; overflow: hidden; }
+        .admin-table th, .admin-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; }
+        .admin-table th { background: #111827; color: #38bdf8; font-size: 0.9em; text-transform: uppercase; }
+        .admin-table tr:hover { background: #24334d; }
+
         /* MODERNÁ SPINKA */
         .paperclip-btn { background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; }
         .paperclip-btn:hover { background: #2563eb; }
@@ -129,14 +135,32 @@
                     <h3 style="color: #38bdf8; margin-top:0;">🌐 Firemná encyklopédia NUCLINO</h3>
                     <p style="margin-bottom:0; color:#94a3b8;">Kliknutím na tlačidlo prejdete do externého prostredia zdieľaných znalostí Innovis.</p>
                 </div>
-                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s;">Vstúpiť do Nuclino ↗</a>
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
             </div>
         </div>
         
         <div id="administration" class="section-panel">
             <h2>Sekcia: Administrácia</h2>
-            <p>Prehľad všetkých registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
-            <div id="all-users-list">Načítavam zoznam kolegov...</div>
+            <p>Prehľad registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
+            <div id="all-users-list" style="margin-bottom: 30px;">Načítavam zoznam kolegov...</div>
+            
+            <div id="admin-logs-view" style="display: none;">
+                <h3 style="color: #10b981; margin-top: 40px; border-top: 1px solid #334155; padding-top: 20px;">👁️ Prehľad: Potvrdenia o prečítaní a porozumení</h3>
+                <p style="color:#94a3b8; font-size:0.9em;">Reálny zoznam zamestnancov, ktorí klikli na tlačidlo potvrdenia pri dokumentoch:</p>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Meno / Užívateľ</th>
+                            <th>E-mail</th>
+                            <th>Názov dokumentu</th>
+                            <th>Dátum a Čas potvrdenia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        <tr><td colspan="4" style="color:#64748b;">Čakám na načítanie záznamov...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         
         <div id="hr" class="section-panel">
@@ -193,9 +217,7 @@
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { 
-            alert("Chyba prihlásenia (Auth): " + err.message); 
-        }
+        } catch(err) { alert("Chyba prihlásenia (Auth): " + err.message); }
     }
 
     async function setupUserSession(emailStr) {
@@ -228,11 +250,43 @@
                 applyUploadZones();
                 loadAllUsers();
                 loadDocuments();
+                
+                // 🔥 ODOMKNUTIE TABUĽKY PRE ADMINA
+                if (userRole === "admin") {
+                    document.getElementById("admin-logs-view").style.display = "block";
+                    loadGlobalReadingLogs();
+                }
             } else {
                 alert("Email '" + emailStr + "' neexistuje v databáze users!");
                 logout();
             }
         } catch(e) { alert("Chyba databázy: " + e.message); }
+    }
+
+    /* 🔥 FUNKCIA NAČÍTAVANIA LOGOV O PREČÍTANÍ PRE TABUĽKU ADMINA */
+    function loadGlobalReadingLogs() {
+        db.collection("logs").onSnapshot((snapshot) => {
+            const tbody = document.getElementById("admin-table-body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            if(snapshot.empty) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color:#64748b; text-align:center;">Zatiaľ žiadny dokument nebol potvrdený ako prečítaný.</td></tr>`;
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const log = doc.data();
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>👤 ${log.userName || 'Zamestnanec'}</b></td>
+                        <td><span style="color:#94a3b8;">${log.userEmail}</span></td>
+                        <td><span style="color:#38bdf8; font-weight:bold;">📄 ${log.docName}</span></td>
+                        <td><span style="color:#10b981;">⏰ ${log.timestamp}</span></td>
+                    </tr>
+                `;
+            });
+        });
     }
 
     function loadAllUsers() {
@@ -297,106 +351,4 @@
         });
     }
 
-    async function handleFileSelect(inputElement, catL1, catL2) {
-        if (!inputElement.files || inputElement.files.length === 0) return;
-        const selectedFile = inputElement.files[0];
-        const autoFileName = selectedFile.name; 
-        
-        const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(autoFileName);
-        try {
-            await db.collection("documents").add({
-                fileName: autoFileName,
-                fileUrl: fallbackUrl,
-                categoryL1: catL1,
-                categoryL2: catL2,
-                uploadedBy: currentUser.email
-            });
-            inputElement.value = "";
-        } catch(e) { alert("Chyba nahrávania: " + e.message); }
-    }
-
-    function loadDocuments() {
-        db.collection("documents").onSnapshot((snapshot) => {
-            const lists = [
-                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
-                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine",
-                "hr-mzdy", "hr-zmluvy"
-            ];
-            lists.forEach(id => {
-                const el = document.getElementById(`list-${id}`);
-                if(el) el.innerHTML = "";
-            });
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const id = doc.id;
-                if (!data.fileName) return;
-
-                const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
-                if (targetElement) {
-                    const hasRead = loggedInUserLogs.includes(id);
-                    let actionHtml = hasRead 
-                        ? `<span class="confirmed-status">✓ Prečítané</span>`
-                        : `<button class="confirm-btn" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
-                    
-                    const canDelete = (currentUser.role === 'admin') || (currentUser.role === 'hr' && data.categoryL1 === 'hr');
-                    let deleteHtml = canDelete 
-                        ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
-                        : '';
-
-                    targetElement.innerHTML += `
-                        <div class="file-row">
-                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
-                            <div>${actionHtml}${deleteHtml}</div>
-                        </div>
-                    `;
-                }
-            });
-        });
-    }
-
-    async function confirmRead(docId, docName) {
-        if (!currentUser) return;
-        if (!confirm(`Rozumiem a potvrdzujem prečítanie dokumentu: ${docName}`)) return;
-        try {
-            await db.collection("logs").add({
-                docId: docId,
-                docName: docName,
-                userEmail: currentUser.email,
-                userName: currentUser.name || currentUser.email,
-                timestamp: new Date().toLocaleString("sk-SK"),
-                type: "Prečítané a Porozumené"
-            });
-            alert("Potvrdené!");
-            setupUserSession(currentUser.email);
-        } catch (e) { alert(e.message); }
-    }
-
-    async function deleteDoc(id) {
-        if(!confirm("Naozaj vymazať tento dokument?")) return;
-        try { await db.collection("documents").doc(id).delete(); } catch(e) {}
-    }
-
-    function showSection(id) {
-        document.querySelectorAll(".section-panel").forEach(s => s.style.display = "none");
-        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
-        
-        const panel = document.getElementById(id);
-        const menuItem = document.getElementById("m-" + id);
-        if(panel) panel.style.display = "block";
-        if(menuItem) menuItem.classList.add("active-menu");
-    }
-
-    function toggleAccordion(id) {
-        const container = document.getElementById(id);
-        const arrow = document.getElementById("arrow-" + id);
-        if(!container) return;
-        const isVisible = container.style.display === "block";
-        container.style.display = isVisible ? "none" : "block";
-        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
-    }
-
-    function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
-</script>
-</body>
-</html>
+    async function handleFileSelect(inputElement, catL1, catL2)
