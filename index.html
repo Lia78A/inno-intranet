@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
+    <!-- STABILNÉ KNIŽNICE V HEAD -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -16,7 +17,7 @@
         .login-box input { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box; }
         .login-box button { width: 100%; padding: 12px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .login-box button:hover { background: #1d4ed8; }
-        .login-logo-svg { width: 160px; height: auto; margin-bottom: 25px; fill: #38bdf8; }
+        .login-logo-svg { width: 160px; height: auto; margin-bottom: 25px; fill: #ffffff; }
 
         /* HLAVNÁ APLIKÁCIA */
         #app { display: none; height: 100vh; }
@@ -56,8 +57,10 @@
 </head>
 <body>
 
+<!-- PRIHLASOVACIA STRÁNKA -->
 <div id="login" class="login-page">
     <div class="login-box">
+        <!-- BIELE LOGO NOVIS - VYCENTROVANÉ -->
         <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
         </svg>
@@ -67,6 +70,7 @@
     </div>
 </div>
 
+<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app">
     <div class="sidebar">
         <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
@@ -82,18 +86,21 @@
     </div>
     
     <div class="main-container">
+        <!-- VIZITKA VPRAVO HORE -->
         <div class="top-header">
             <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
         </div>
         
+        <!-- OBSAH: DASHBOARD -->
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
-                <h3>Vitaj v internom systéme spoločnosti INNO</h3>
+                <h3>Vitaj v internom syséme spoločnosti INNO</h3>
                 <p>Všetky sekcie a dokumentové databázy boli úspešne prepojené a obnovené.</p>
             </div>
         </div>
         
+        <!-- OBSAH: DOKUMENTY (2. ÚROVEŇ) -->
         <div id="docs" class="section-panel">
             <h2>Sekcia: Dokumenty</h2>
             
@@ -114,6 +121,7 @@
             </div>
         </div>
         
+        <!-- OBSAH: KNIŽNICA -->
         <div id="library" class="section-panel">
             <h2>Sekcia: Knižnica</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -125,6 +133,7 @@
             </div>
         </div>
         
+        <!-- OBSAH: HR SEKCE -->
         <div id="hr" class="section-panel">
             <h2>Sekcia: HR a Mzdy</h2>
             <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 20px; border-radius: 10px;">
@@ -133,6 +142,7 @@
             </div>
         </div>
 
+        <!-- OBSAH: INÉ -->
         <div id="others" class="section-panel">
             <h2>Sekcia: Iné</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
@@ -153,14 +163,14 @@
         appId: "1:816972324613:web:81429910b0de1e4cbda16c"
     };
 
-    // INICIALIZÁCIA SYSTÉMU HNEĎ NA ŠTARTE
+    // INICIALIZÁCIA SYSTÉMU
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     let currentUser = null;
     let loggedInUserLogs = [];
 
-    // SLEDOVANIE PRIHLÁSENIA
+    // SLEDOVANIE STAVU PRIHLÁSENIA
     auth.onAuthStateChanged((user) => {
         if (user) {
             setupUserSession(user.email.toLowerCase());
@@ -173,10 +183,12 @@
     async function login() {
         const email = document.getElementById("email").value.trim().toLowerCase();
         const password = document.getElementById("password").value;
-        if(!email || !password) { alert("Vyplň e-mail aj heslo."); return; }
+        if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { alert("Chyba prihlásenia: " + err.message); }
+        } catch(err) { 
+            alert("Chyba prihlásenia Auth: " + err.message); 
+        }
     }
 
     async function setupUserSession(emailStr) {
@@ -191,13 +203,143 @@
                 document.getElementById("login").style.display = "none";
                 document.getElementById("app").style.display = "flex";
                 
-                // ZÁPIS VIZITKY VPRAVO HORE
+                // VIZITKA
                 const finalName = currentUser.name || emailStr.split('@')[0];
                 document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${currentUser.role}</span>)`;
                 
-                // OCHRANA ROLÍ - ZOBRAZENIE HR PRIEČINKA
+                // ZOBRAZENIE HR PODĽA ROLY
                 if (currentUser.role === "hr" || currentUser.role === "admin") {
                     document.getElementById("m-hr").style.display = "block";
                 } else {
                     document.getElementById("m-hr").style.display = "none";
                 }
+                
+                const logSnap = await db.collection("logs").where("userEmail", "==", emailStr).get();
+                loggedInUserLogs = logSnap.docs.map(l => l.data().docId);
+
+                applyUploadZones();
+                loadDocuments();
+            } else {
+                alert("Úspešne prihlásená do Firebase Auth, ale tvoj email '" + emailStr + "' neexistuje vo Firestore databáze v kolekcii 'users'!");
+                logout();
+            }
+        } catch(e) { alert("Chyba pri načítaní profilu z DB: " + e.message); }
+    }
+
+    function applyUploadZones() {
+        const categories = [
+            { l1: "iso", l2: "politika" }, { l1: "iso", l2: "ciele" }, { l1: "iso", l2: "smernice" }, { l1: "iso", l2: "ine" },
+            { l1: "isms", l2: "politika" }, { l1: "isms", l2: "ciele" }, { l1: "isms", l2: "smernice" }, { l1: "isms", l2: "ine" }
+        ];
+        categories.forEach(cat => {
+            const zone = document.getElementById(`upload-${cat.l1}-${cat.l2}`);
+            if (zone) {
+                if (currentUser && currentUser.role === "admin") {
+                    zone.innerHTML = `
+                        <div class="upload-box">
+                            <input type="text" id="input-${cat.l1}-${cat.l2}" placeholder="Názov dokumentu z PC...">
+                            <button onclick="uploadDocumentDirect(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
+                        </div>
+                    `;
+                } else { zone.innerHTML = ""; }
+            }
+        });
+    }
+
+    async function uploadDocumentDirect(event, catL1, catL2) {
+        if(event) event.preventDefault();
+        const inputField = document.getElementById(`input-${catL1}-${catL2}`);
+        const name = inputField.value.trim();
+        if(!name) { alert("Zadaj názov dokumentu."); return; }
+        const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(name);
+        try {
+            await db.collection("documents").add({
+                fileName: name,
+                fileUrl: fallbackUrl,
+                categoryL1: catL1,
+                categoryL2: catL2,
+                uploadedBy: currentUser.email
+            });
+            inputField.value = "";
+        } catch(e) { alert("Chyba nahrávania: " + e.message); }
+    }
+
+    function loadDocuments() {
+        db.collection("documents").onSnapshot((snapshot) => {
+            const lists = [
+                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
+                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine"
+            ];
+            lists.forEach(id => {
+                const el = document.getElementById(`list-${id}`);
+                if(el) el.innerHTML = "";
+            });
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const id = doc.id;
+                if (!data.fileName) return;
+
+                const targetElement = document.getElementById(`list-${data.categoryL1}-${data.categoryL2}`);
+                if (targetElement) {
+                    const hasRead = loggedInUserLogs.includes(id);
+                    let actionHtml = hasRead 
+                        ? `<span class="confirmed-status">✓ Prečítané</span>`
+                        : `<button class="confirm-btn" onclick="confirmRead('${id}', '${data.fileName}')">👁 Potvrdiť prečítanie</button>`;
+                    
+                    let deleteHtml = (currentUser && currentUser.role === 'admin') 
+                        ? `<button onclick="deleteDoc('${id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>` 
+                        : '';
+
+                    targetElement.innerHTML += `
+                        <div class="file-row">
+                            <a href="${data.fileUrl}" target="_blank">📄 ${data.fileName}</a>
+                            <div>${actionHtml}${deleteHtml}</div>
+                        </div>
+                    `;
+                }
+            });
+        });
+    }
+
+    async function confirmRead(docId, docName) {
+        if (!currentUser) return;
+        if (!confirm(`Rozumiem a potvrdzujem prečítanie dokumentu: ${docName}`)) return;
+        try {
+            await db.collection("logs").add({
+                docId: docId,
+                docName: docName,
+                userEmail: currentUser.email,
+                userName: currentUser.name || currentUser.email,
+                timestamp: new Date().toLocaleString("sk-SK"),
+                type: "Prečítané a Porozumené"
+            });
+            alert("Potvrdené!");
+            setupUserSession(currentUser.email);
+        } catch (e) { alert(e.message); }
+    }
+
+    async function deleteDoc(id) {
+        if(!confirm("Naozaj vymazať tento dokument?")) return;
+        try { await db.collection("documents").doc(id).delete(); } catch(e) {}
+    }
+
+    function showSection(id) {
+        document.querySelectorAll(".section-panel").forEach(s => s.style.display = "none");
+        document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
+        document.getElementById(id).style.display = "block";
+        document.getElementById("m-" + id).classList.add("active-menu");
+    }
+
+    function toggleAccordion(id) {
+        const container = document.getElementById(id);
+        const arrow = document.getElementById("arrow-" + id);
+        const isVisible = container.style.display === "block";
+        container.style.display = isVisible ? "none" : "block";
+        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
+    }
+
+    function logout() { auth.signOut().then(() => { currentUser = null; location.reload(); }); }
+</script>
+</body>
+</html>
