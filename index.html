@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
-    <!-- STABILNÉ KNIŽNICE V HEAD -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -42,7 +41,7 @@
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
-        /* FILE CARD A VNÚTORNÁ HISTÓRIA PRE ADMINA */
+        /* FILE CARD */
         .file-card { background: #334155; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
         .file-row-main { display: flex; justify-content: space-between; align-items: center; }
         .file-card a { color: #38bdf8; text-decoration: none; font-weight: bold; }
@@ -50,7 +49,12 @@
         .doc-admin-logs { background: #1e293b; border-radius: 4px; padding: 8px 12px; font-size: 0.85em; border-left: 3px solid #10b981; margin-top: 4px; }
         .doc-admin-logs-title { color: #10b981; font-weight: bold; margin-bottom: 4px; display: block; }
         .log-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .log-item:last-child { border-bottom: none; }
+        
+        /* FORMULÁR PRE NOVÉHO UŽÍVATEĽA */
+        .admin-form-box { background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .admin-form-box input, .admin-form-box select { background: #0f172a; color: white; border: 1px solid #334155; padding: 10px; border-radius: 6px; outline: none; font-size: 0.9em; flex: 1; min-width: 160px; }
+        .admin-form-box button { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .admin-form-box button:hover { background: #059669; }
 
         .confirm-btn { background: #475569; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
         .confirm-btn:hover { background: #64748b; }
@@ -60,17 +64,12 @@
         .user-row { background: #1e293b; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #38bdf8; }
         .user-row .u-email { color: #64748b; font-size: 0.9em; }
         .role-select { background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; outline: none; }
-
-        /* MODERNÁ SPINKA */
-        .paperclip-btn { background: #3b82f6; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: none; transition: 0.2s; }
-        .paperclip-btn:hover { background: #2563eb; }
         .hidden-file-input { display: none; }
         .section-panel { display: none; }
     </style>
 </head>
 <body>
 
-<!-- PRIHLASOVACIA STRÁNKA -->
 <div id="login" class="login-page">
     <div class="login-box">
         <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +81,6 @@
     </div>
 </div>
 
-<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app">
     <div class="sidebar">
         <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
@@ -91,7 +89,6 @@
         <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Dashboard</div>
         <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
         <div id="m-library" class="menu-item" onclick="showSection('library')">Knižnica (Nuclino)</div>
-        <!-- 🔥 NOVÁ SEKCIA VYTIHNUTÁ DO MENU 1. ÚROVNE -->
         <div id="m-attendance" class="menu-item" onclick="showSection('attendance-section')">Dochádzka (JIRA)</div>
         <div id="m-administration" class="menu-item" onclick="showSection('administration')">Administrácia</div>
         <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR</div>
@@ -105,7 +102,6 @@
             <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
         </div>
         
-        <!-- DASHBOARD (OPÄŤ ČISTÝ A PREHĽADNÝ) -->
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
             <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px;">
@@ -114,7 +110,6 @@
             </div>
         </div>
 
-        <!-- DOKUMENTY (ISO / ISMS) -->
         <div id="docs" class="section-panel">
             <h2>Sekcia: Dokumenty</h2>
             <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania a správa súborov.</p>
@@ -136,7 +131,6 @@
             </div>
         </div>
 
-        <!-- KNIŽNICA -->
         <div id="library" class="section-panel">
             <h2>Sekcia: Knižnica (Nuclino)</h2>
             <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
@@ -148,7 +142,6 @@
             </div>
         </div>
 
-        <!-- 🔥 SAMOSTATNÁ PANELOVÁ SEKCIA: DOCHÁDZKA -->
         <div id="attendance-section" class="section-panel">
             <h2>Sekcia: Dochádzka (JIRA)</h2>
             <p style="color:#94a3b8; margin-bottom: 20px;">Evidencia odpracovaného času na projektoch a správa pracovných výkazov.</p>
@@ -157,18 +150,29 @@
                     <h3 style="color: #38bdf8; margin-top:0;">⏱️ Evidencia dochádzky v systéme JIRA</h3>
                     <p style="margin-bottom:0; color:#94a3b8;">Zaznamenajte si príchod, odchod alebo zalogujte hodiny k prideleným úlohám.</p>
                 </div>
-                <a href="https://jira.atlassian.com" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,82,204,0.3);">Zaznamenať dochádzku v JIRA ↗</a>
+                <a href="https://jira.atlassian.com" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">Zaznamenáť dochádzku v JIRA ↗</a>
             </div>
         </div>
         
-        <!-- ADMINISTRÁCIA -->
         <div id="administration" class="section-panel">
             <h2>Sekcia: Administrácia</h2>
             <p>Prehľad registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
+            
+            <div class="admin-form-box">
+                <div style="width: 100%; color: #10b981; font-weight: bold; margin-bottom: 5px; font-size: 0.95em;">➕ Registrácia nového zamestnanca:</div>
+                <input type="text" id="new-user-name" placeholder="Celé meno (napr. Ján Hrach)">
+                <input type="email" id="new-user-email" placeholder="Firemný e-mail">
+                <select id="new-user-role">
+                    <option value="user">user</option>
+                    <option value="hr">hr</option>
+                    <option value="admin">admin</option>
+                </select>
+                <button onclick="addNewUserDirect()">Vytvoriť užívateľa</button>
+            </div>
+
             <div id="all-users-list">Načítavam zoznam kolegov...</div>
         </div>
         
-        <!-- HR SEKCE -->
         <div id="hr" class="section-panel">
             <h2>Sekcia: HR a Personálne zložky</h2>
             <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
@@ -182,7 +186,6 @@
             </div>
         </div>
 
-        <!-- INÉ -->
         <div id="others" class="section-panel">
             <h2>Sekcia: Iné</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
@@ -221,13 +224,30 @@
         }
     });
 
+    /* 🔥 VYLEPŠENÉ PRIHLASOVANIE: AUTOMATICKÉ SAMOREGISTROVANIE PRE NOVÝCH ĽUDÍ */
     async function login() {
         const email = document.getElementById("login-email").value.trim().toLowerCase();
         const password = document.getElementById("login-password").value;
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
+        
         try {
+            // Pokus o klasické prihlásenie
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { alert("Chyba prihlásenia (Auth): " + err.message); }
+        } catch(err) { 
+            // 💡 AK POUŽÍVATEĽ NEEXISTUJE V AUTH, ALE JE PREDPRIPRAVENÝ VO FIRESTORE OD ADMINA:
+            if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+                const checkSnap = await db.collection("users").where("email", "==", email).get();
+                if (!checkSnap.empty) {
+                    try {
+                        // Zaregistrujeme ho s heslom, ktoré zadal pri prvom pokuse
+                        await auth.createUserWithEmailAndPassword(email, password);
+                        alert("Vítame vás! Váš účet bol úspešne aktivovaný a prepojený s profilom.");
+                        return;
+                    } catch(createErr) { alert("Chyba aktivácie: " + createErr.message); return; }
+                }
+            }
+            alert("Chyba prihlásenia (Auth): " + err.message); 
+        }
     }
 
     async function setupUserSession(emailStr) {
@@ -276,6 +296,36 @@
                 logout();
             }
         } catch(e) { alert("Chyba databázy: " + e.message); }
+    }
+
+    /* 🔥 NOVÁ FUNKCIA: PRIDANIE NOVÉHO POUŽÍVATEĽA PRIAMO DO FIRESTORE */
+    async function addNewUserDirect() {
+        const nameField = document.getElementById("new-user-name");
+        const emailField = document.getElementById("new-user-email");
+        const roleField = document.getElementById("new-user-role");
+
+        const name = nameField.value.trim();
+        const email = emailField.value.trim().toLowerCase();
+        const role = roleField.value;
+
+        if(!name || !email) { alert("Prosím vyplň meno aj firemný e-mail."); return; }
+
+        try {
+            // Kontrola či už v DB náhodou e-mail nie je
+            const existing = await db.collection("users").where("email", "==", email).get();
+            if(!existing.empty) { alert("Používateľ s týmto e-mailom už v systéme existuje."); return; }
+
+            // Zápis nového profilu
+            await db.collection("users").add({
+                name: name,
+                email: email,
+                role: role
+            });
+
+            alert(`Používateľ ${name} bol úspešne vytvorený! Pri prvom prihlásení na úvodnej stránke si zadá svoje heslo, ktorým sa aktivuje.`);
+            nameField.value = "";
+            emailField.value = "";
+        } catch(e) { alert("Chyba pri vytváraní: " + e.message); }
     }
 
     function loadAllUsers() {
@@ -467,11 +517,8 @@
         document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
         
         const panel = document.getElementById(id);
-        if(panel) {
-            panel.style.display = "block";
-        }
+        if(panel) { panel.style.display = "block"; }
         
-        // Správne nasvietenie aktívnej položky v menu na základe ID sekcie
         let menuId = "m-dashboard";
         if (id === "docs") menuId = "m-docs";
         if (id === "library") menuId = "m-library";
