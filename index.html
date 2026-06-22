@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INNO Firebase Intranet</title>
-    <!-- STABILNÉ KNIŽNICE V HEAD -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; }
         
-        /* LOGIN OBRAZOVKA - CENTROVANÁ, TMAVOMODRÁ */
+        /* LOGIN OBRAZOVKA */
         .login-page { height: 100vh; display: flex; justify-content: center; align-items: center; background: #0f172a; }
         .login-box { background: #1e293b; padding: 40px; border-radius: 12px; width: 320px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
         .login-box input { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box; }
@@ -49,18 +48,14 @@
         .confirm-btn:hover { background: #64748b; }
         .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: 1px solid #10b981; }
 
-        /* UPLOAD BOX PRE ADMINA */
-        .upload-box { display: flex; gap: 10px; margin-top: 10px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px dashed #475569; }
-        .upload-box input { flex-grow: 1; padding: 6px; border-radius: 4px; border: none; background: #111827; color: white; font-size: 0.85em; }
-        .upload-box button { background: #10b981; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .quick-add-btn { background: #10b981; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; margin-top: 10px; display: inline-block; }
+        .quick-add-btn:hover { background: #059669; }
     </style>
 </head>
 <body>
 
-<!-- PRIHLASOVACIA STRÁNKA -->
 <div id="login" class="login-page">
     <div class="login-box">
-        <!-- BIELE LOGO NOVIS - VYCENTROVANÉ -->
         <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
             <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
         </svg>
@@ -70,7 +65,6 @@
     </div>
 </div>
 
-<!-- HLAVNÉ ROZHRANIE INTRANETU -->
 <div id="app">
     <div class="sidebar">
         <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
@@ -86,21 +80,18 @@
     </div>
     
     <div class="main-container">
-        <!-- VIZITKA VPRAVO HORE -->
         <div class="top-header">
             <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
         </div>
         
-        <!-- OBSAH: DASHBOARD -->
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
-                <h3>Vitaj v internom syséme spoločnosti INNO</h3>
+                <h3>Vitaj v internom systéme spoločnosti INNO</h3>
                 <p>Všetky sekcie a dokumentové databázy boli úspešne prepojené a obnovené.</p>
             </div>
         </div>
         
-        <!-- OBSAH: DOKUMENTY (2. ÚROVEŇ) -->
         <div id="docs" class="section-panel">
             <h2>Sekcia: Dokumenty</h2>
             
@@ -121,7 +112,6 @@
             </div>
         </div>
         
-        <!-- OBSAH: KNIŽNICA -->
         <div id="library" class="section-panel">
             <h2>Sekcia: Knižnica</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -133,7 +123,6 @@
             </div>
         </div>
         
-        <!-- OBSAH: HR SEKCE -->
         <div id="hr" class="section-panel">
             <h2>Sekcia: HR a Mzdy</h2>
             <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 20px; border-radius: 10px;">
@@ -142,7 +131,6 @@
             </div>
         </div>
 
-        <!-- OBSAH: INÉ -->
         <div id="others" class="section-panel">
             <h2>Sekcia: Iné</h2>
             <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
@@ -163,14 +151,12 @@
         appId: "1:816972324613:web:81429910b0de1e4cbda16c"
     };
 
-    // INICIALIZÁCIA SYSTÉMU
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     let currentUser = null;
     let loggedInUserLogs = [];
 
-    // SLEDOVANIE STAVU PRIHLÁSENIA
     auth.onAuthStateChanged((user) => {
         if (user) {
             setupUserSession(user.email.toLowerCase());
@@ -186,9 +172,7 @@
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
-        } catch(err) { 
-            alert("Chyba prihlásenia Auth: " + err.message); 
-        }
+        } catch(err) { alert("Chyba prihlásenia Auth: " + err.message); }
     }
 
     async function setupUserSession(emailStr) {
@@ -200,15 +184,18 @@
                 currentUser.docId = userDoc.id;
                 currentUser.email = emailStr;
                 
+                // 🔥 OŠETRENIE: Prevod roly na malé písmená pre 100% bezpečnosť
+                const userRole = (currentUser.role || "user").toLowerCase().trim();
+                currentUser.role = userRole; 
+
                 document.getElementById("login").style.display = "none";
                 document.getElementById("app").style.display = "flex";
                 
-                // VIZITKA
                 const finalName = currentUser.name || emailStr.split('@')[0];
-                document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${currentUser.role}</span>)`;
+                document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${userRole}</span>)`;
                 
-                // ZOBRAZENIE HR PODĽA ROLY
-                if (currentUser.role === "hr" || currentUser.role === "admin") {
+                // 🔥 KONTROLA VIDITEĽNOSTI: admin aj hr majú povolený prístup
+                if (userRole === "hr" || userRole === "admin") {
                     document.getElementById("m-hr").style.display = "block";
                 } else {
                     document.getElementById("m-hr").style.display = "none";
@@ -220,10 +207,10 @@
                 applyUploadZones();
                 loadDocuments();
             } else {
-                alert("Úspešne prihlásená do Firebase Auth, ale tvoj email '" + emailStr + "' neexistuje vo Firestore databáze v kolekcii 'users'!");
+                alert("Email '" + emailStr + "' neexistuje v kolekcii 'users'!");
                 logout();
             }
-        } catch(e) { alert("Chyba pri načítaní profilu z DB: " + e.message); }
+        } catch(e) { alert("Chyba: " + e.message); }
     }
 
     function applyUploadZones() {
@@ -235,32 +222,27 @@
             const zone = document.getElementById(`upload-${cat.l1}-${cat.l2}`);
             if (zone) {
                 if (currentUser && currentUser.role === "admin") {
-                    zone.innerHTML = `
-                        <div class="upload-box">
-                            <input type="text" id="input-${cat.l1}-${cat.l2}" placeholder="Názov dokumentu z PC...">
-                            <button onclick="uploadDocumentDirect(event, '${cat.l1}', '${cat.l2}')">➕ Pridať</button>
-                        </div>
-                    `;
+                    zone.innerHTML = `<button class="quick-add-btn" onclick="uploadDocumentQuick('${cat.l1}', '${cat.l2}')">➕ Pridať dokument</button>`;
                 } else { zone.innerHTML = ""; }
             }
         });
     }
 
-    async function uploadDocumentDirect(event, catL1, catL2) {
-        if(event) event.preventDefault();
-        const inputField = document.getElementById(`input-${catL1}-${catL2}`);
-        const name = inputField.value.trim();
-        if(!name) { alert("Zadaj názov dokumentu."); return; }
-        const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(name);
+    async function uploadDocumentQuick(catL1, catL2) {
+        const name = prompt("Zadaj názov nového dokumentu:");
+        if (name === null) return;
+        const trimmedName = name.trim();
+        if (!trimmedName) { alert("Názov nemôže byť prázdny."); return; }
+        
+        const fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(trimmedName);
         try {
             await db.collection("documents").add({
-                fileName: name,
+                fileName: trimmedName,
                 fileUrl: fallbackUrl,
                 categoryL1: catL1,
                 categoryL2: catL2,
                 uploadedBy: currentUser.email
             });
-            inputField.value = "";
         } catch(e) { alert("Chyba nahrávania: " + e.message); }
     }
 
