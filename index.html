@@ -2,32 +2,23 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>INNO Intranet</title>
+    <title>INNO Intranet - Dokumenty</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; display: flex; }
-        
-        /* Sidebar */
-        .sidebar { width: 250px; background: #111827; height: 100vh; padding: 20px; box-sizing: border-box; }
-        .menu-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #1e293b; }
-        .menu-item:hover { color: #38bdf8; }
-        
-        /* Main Content */
+        .sidebar { width: 250px; background: #111827; height: 100vh; padding: 20px; }
         .main { flex-grow: 1; padding: 30px; }
-        
-        /* Header - Vpravo hore */
-        .header { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-        .user-box { background: #1e293b; padding: 10px 20px; border-radius: 20px; border: 1px solid #334155; }
-        
-        #app { display: none; width: 100%; }
-        .section { display: none; }
+        .header { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+        .category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; }
+        .subcategory { padding: 10px 20px; background: #334155; margin: 5px 0; border-radius: 5px; }
+        .file-upload { margin-top: 10px; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
-<div id="login" style="width:100%; display:flex; justify-content:center; align-items:center; height:100vh;">
+<div id="login" style="display:flex; justify-content:center; align-items:center; width:100%; height:100vh;">
     <div style="background:#1e293b; padding:40px; border-radius:12px;">
         <input id="email" placeholder="Email"><br>
         <input id="password" type="password" placeholder="Heslo"><br>
@@ -35,66 +26,64 @@
     </div>
 </div>
 
-<div id="app">
+<div id="app" style="display:none; width:100%;">
     <div class="sidebar">
-        <h3>INNO Intranet</h3>
-        <div class="menu-item" onclick="show('dashboard')">Dashboard</div>
-        <div class="menu-item" onclick="show('library')">Knižnica</div>
-        <div class="menu-item" onclick="show('docs')">Dokumenty (ISO/ISMS)</div>
-        <div class="menu-item" onclick="logout()" style="color:#ef4444;">Odhlásiť</div>
+        <h3>Menu</h3>
+        <div class="category" onclick="show('docs')">Dokumenty</div>
     </div>
-    
     <div class="main">
-        <div class="header">
-            <div class="user-box" id="user-info">Načítavam...</div>
+        <div class="header" id="user-info"></div>
+        <div id="docs">
+            <h2>Štruktúra dokumentov</h2>
+            
+            <div class="category" onclick="toggle('iso-list')">📁 ISO Úroveň 1</div>
+            <div id="iso-list" style="display:none;">
+                <div class="subcategory">Politika <div class="file-upload" id="upload-iso-politika"></div><div id="files-iso-politika"></div></div>
+                <div class="subcategory">Ciele <div class="file-upload" id="upload-iso-ciele"></div><div id="files-iso-ciele"></div></div>
+            </div>
         </div>
-        
-        <div id="dashboard" class="section" style="display:block;"><h2>Dashboard</h2></div>
-        <div id="library" class="section"><h2>Knižnica</h2></div>
-        <div id="docs" class="section"><h2>Dokumenty</h2><div id="doc-list"></div></div>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
-        authDomain: "inno-intranet.firebaseapp.com",
-        projectId: "inno-intranet",
-        storageBucket: "inno-intranet.firebasestorage.app",
-        messagingSenderId: "816972324613",
-        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
-    };
-
+    const firebaseConfig = { /* tvoja config */ };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
-            
-            const snap = await db.collection("users").where("email", "==", user.email.toLowerCase()).get();
-            if(!snap.empty) {
-                const u = snap.docs[0].data();
-                document.getElementById('user-info').innerText = `${u.name} (${u.role})`;
-            }
-        } else {
-            document.getElementById('login').style.display = 'flex';
-            document.getElementById('app').style.display = 'none';
-        }
+    // Funkcia na pridanie dokumentu
+    function renderUploadZone(l1, l2) {
+        const zone = document.getElementById(`upload-${l1}-${l2}`);
+        zone.innerHTML = `<input type="text" id="name-${l1}-${l2}" placeholder="Názov súboru">
+                          <button onclick="addFile('${l1}', '${l2}')">Pridať</button>`;
+    }
+
+    async function addFile(l1, l2) {
+        const name = document.getElementById(`name-${l1}-${l2}`).value;
+        await db.collection("documents").add({
+            categoryL1: l1,
+            categoryL2: l2,
+            fileName: name,
+            timestamp: new Date()
+        });
+        alert("Súbor pridaný!");
+    }
+
+    // Načítanie dokumentov
+    db.collection("documents").onSnapshot(snap => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.getElementById(`files-${d.categoryL1}-${d.categoryL2}`);
+            if(div) div.innerHTML += `<div>📄 ${d.fileName}</div>`;
+        });
     });
 
-    async function login() {
-        try { await auth.signInWithEmailAndPassword(document.getElementById("email").value.trim().toLowerCase(), document.getElementById("password").value); }
-        catch(e) { alert(e.message); }
-    }
+    // Spustenie zón
+    renderUploadZone('iso', 'politika');
+    renderUploadZone('iso', 'ciele');
 
-    function show(id) {
-        document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
-    }
-    function logout() { auth.signOut(); }
+    auth.onAuthStateChanged(u => { if(u) { document.getElementById('login').style.display='none'; document.getElementById('app').style.display='flex'; } });
+    async function login() { await auth.signInWithEmailAndPassword(document.getElementById("email").value.trim().toLowerCase(), document.getElementById("password").value); }
 </script>
 </body>
 </html>
