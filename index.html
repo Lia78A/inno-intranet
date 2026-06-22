@@ -2,88 +2,202 @@
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <title>INNO Intranet - Dokumenty</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INNO Firebase Intranet</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; display: flex; }
-        .sidebar { width: 250px; background: #111827; height: 100vh; padding: 20px; }
-        .main { flex-grow: 1; padding: 30px; }
-        .header { display: flex; justify-content: flex-end; margin-bottom: 20px; }
-        .category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; }
-        .subcategory { padding: 10px 20px; background: #334155; margin: 5px 0; border-radius: 5px; }
-        .file-upload { margin-top: 10px; font-size: 0.8em; }
+        body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; }
+        
+        /* LOGIN OBRAZOVKA - CENTROVANÁ, TMAVOMODRÁ */
+        .login-page { height: 100vh; display: flex; justify-content: center; align-items: center; background: #0f172a; }
+        .login-box { background: #1e293b; padding: 40px; border-radius: 12px; width: 320px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .login-box input { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; background: #334155; color: white; box-sizing: border-box; }
+        .login-box button { width: 100%; padding: 12px; background: #2563eb; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .login-box button:hover { background: #1d4ed8; }
+        .login-logo-svg { width: 160px; height: auto; margin-bottom: 25px; fill: #38bdf8; }
+
+        /* HLAVNÁ APLIKÁCIA */
+        #app { display: none; height: 100vh; }
+        .sidebar { width: 240px; background: #111827; padding: 20px; box-sizing: border-box; height: 100vh; position: fixed; }
+        .main-container { margin-left: 240px; flex-grow: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
+        
+        /* VIZITKA POUŽÍVATEĽA VPRAVO HORE */
+        .top-header { display: flex; justify-content: flex-end; margin-bottom: 25px; }
+        .user-badge { background: #1e293b; padding: 10px 20px; border-radius: 20px; border: 1px solid #334155; font-size: 0.95em; }
+        .user-badge span { color: #38bdf8; font-weight: bold; text-transform: uppercase; margin-left: 5px; }
+
+        /* MENU SEKCIÍ */
+        .menu-title { font-size: 0.85em; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 5px; font-weight: bold; }
+        .menu-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; transition: 0.2s; font-weight: 500; }
+        .menu-item:hover { background: #1f2937; color: #38bdf8; }
+        .active-menu { background: #1e293b; color: #38bdf8; }
+
+        /* STRUKTÚRA DOKUMENTOV (ACCORDION) */
+        .section-panel { display: none; }
+        .doc-category { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
+        .doc-category:hover { background: #334155; }
+        .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
+        .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
+        
+        /* DOKUMENTY A TLAČIDLÁ */
+        .file-row { background: #334155; padding: 12px; margin: 6px 0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .file-row a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        .confirm-btn { background: #475569; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
+        .confirm-btn:hover { background: #64748b; }
+        .confirmed-status { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: 1px solid #10b981; }
+
+        /* UPLOAD BOX PRE ADMINA */
+        .upload-box { display: flex; gap: 10px; margin-top: 10px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px dashed #475569; }
+        .upload-box input { flex-grow: 1; padding: 6px; border-radius: 4px; border: none; background: #111827; color: white; font-size: 0.85em; }
+        .upload-box button { background: #10b981; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="login" style="display:flex; justify-content:center; align-items:center; width:100%; height:100vh;">
-    <div style="background:#1e293b; padding:40px; border-radius:12px;">
-        <input id="email" placeholder="Email"><br>
-        <input id="password" type="password" placeholder="Heslo"><br>
+<div id="login" class="login-page">
+    <div class="login-box">
+        <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
+        </svg>
+        <input id="email" placeholder="Email (meno@inno.sk)">
+        <input id="password" type="password" placeholder="Heslo">
         <button onclick="login()">Login</button>
     </div>
 </div>
 
-<div id="app" style="display:none; width:100%;">
+<div id="app">
     <div class="sidebar">
-        <h3>Menu</h3>
-        <div class="category" onclick="show('docs')">Dokumenty</div>
+        <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
+        
+        <div class="menu-title">Sekcie 1. úrovne</div>
+        <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Dashboard</div>
+        <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
+        <div id="m-library" class="menu-item" onclick="showSection('library')">Knižnica</div>
+        <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR (Chránené)</div>
+        <div id="m-others" class="menu-item" onclick="showSection('others')">Iné</div>
+        
+        <div class="menu-item" onclick="logout()" style="color: #ef4444; margin-top: 40px; border-top: 1px solid #1f2937; padding-top: 15px;">Odhlásiť</div>
     </div>
-    <div class="main">
-        <div class="header" id="user-info"></div>
-        <div id="docs">
-            <h2>Štruktúra dokumentov</h2>
+    
+    <div class="main-container">
+        <div class="top-header">
+            <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
+        </div>
+        
+        <div id="dashboard" class="section-panel" style="display: block;">
+            <h2>Dashboard</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
+                <h3>Vitaj v internom systéme spoločnosti INNO</h3>
+                <p>Všetky sekcie a dokumentové databázy boli úspešne prepojené a obnovené.</p>
+            </div>
+        </div>
+        
+        <div id="docs" class="section-panel">
+            <h2>Sekcia: Dokumenty</h2>
             
-            <div class="category" onclick="toggle('iso-list')">📁 ISO Úroveň 1</div>
-            <div id="iso-list" style="display:none;">
-                <div class="subcategory">Politika <div class="file-upload" id="upload-iso-politika"></div><div id="files-iso-politika"></div></div>
-                <div class="subcategory">Ciele <div class="file-upload" id="upload-iso-ciele"></div><div id="files-iso-ciele"></div></div>
+            <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
+            <div id="cat-iso" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-iso-politika"></div><div id="upload-iso-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-iso-ciele"></div><div id="upload-iso-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-iso-smernice"></div><div id="upload-iso-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine"></div><div id="upload-iso-ine"></div></div>
+            </div>
+
+            <div class="doc-category" onclick="toggleAccordion('cat-isms')">📁 Úroveň 2: ISMS (Bezpečnosť) <span id="arrow-cat-isms">▼</span></div>
+            <div id="cat-isms" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-isms-politika"></div><div id="upload-isms-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele"></div><div id="upload-isms-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice"></div><div id="upload-isms-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine"></div><div id="upload-isms-ine"></div></div>
+            </div>
+        </div>
+        
+        <div id="library" class="section-panel">
+            <h2>Sekcia: Knižnica</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3>🌐 Úroveň 2: NUCLINO</h3>
+                    <p>Prechod do firemnej encyklopédie a zdieľaných znalostí.</p>
+                </div>
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
+            </div>
+        </div>
+        
+        <div id="hr" class="section-panel">
+            <h2>Sekcia: HR a Mzdy</h2>
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 20px; border-radius: 10px;">
+                <h3>🔒 Chránená personálna zóna</h3>
+                <p>Táto sekcia je viditeľná a prístupná výhradne zamestnancom s priradenou rolou <b>HR</b> alebo <b>Admin</b>.</p>
+            </div>
+        </div>
+
+        <div id="others" class="section-panel">
+            <h2>Sekcia: Iné</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
+                <p>Ostatné firemné formuláre a pomocné odkazy.</p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = { /* tvoja config */ };
+    /* KONFIGURÁCIA FIREBASE */
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
+        authDomain: "inno-intranet.firebaseapp.com",
+        projectId: "inno-intranet",
+        storageBucket: "inno-intranet.firebasestorage.app",
+        messagingSenderId: "816972324613",
+        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
+    };
+
+    // INICIALIZÁCIA SYSTÉMU HNEĎ NA ŠTARTE
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    let currentUser = null;
+    let loggedInUserLogs = [];
 
-    // Funkcia na pridanie dokumentu
-    function renderUploadZone(l1, l2) {
-        const zone = document.getElementById(`upload-${l1}-${l2}`);
-        zone.innerHTML = `<input type="text" id="name-${l1}-${l2}" placeholder="Názov súboru">
-                          <button onclick="addFile('${l1}', '${l2}')">Pridať</button>`;
-    }
-
-    async function addFile(l1, l2) {
-        const name = document.getElementById(`name-${l1}-${l2}`).value;
-        await db.collection("documents").add({
-            categoryL1: l1,
-            categoryL2: l2,
-            fileName: name,
-            timestamp: new Date()
-        });
-        alert("Súbor pridaný!");
-    }
-
-    // Načítanie dokumentov
-    db.collection("documents").onSnapshot(snap => {
-        snap.forEach(doc => {
-            const d = doc.data();
-            const div = document.getElementById(`files-${d.categoryL1}-${d.categoryL2}`);
-            if(div) div.innerHTML += `<div>📄 ${d.fileName}</div>`;
-        });
+    // SLEDOVANIE PRIHLÁSENIA
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            setupUserSession(user.email.toLowerCase());
+        } else {
+            document.getElementById("login").style.display = "flex";
+            document.getElementById("app").style.display = "none";
+        }
     });
 
-    // Spustenie zón
-    renderUploadZone('iso', 'politika');
-    renderUploadZone('iso', 'ciele');
+    async function login() {
+        const email = document.getElementById("email").value.trim().toLowerCase();
+        const password = document.getElementById("password").value;
+        if(!email || !password) { alert("Vyplň e-mail aj heslo."); return; }
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch(err) { alert("Chyba prihlásenia: " + err.message); }
+    }
 
-    auth.onAuthStateChanged(u => { if(u) { document.getElementById('login').style.display='none'; document.getElementById('app').style.display='flex'; } });
-    async function login() { await auth.signInWithEmailAndPassword(document.getElementById("email").value.trim().toLowerCase(), document.getElementById("password").value); }
-</script>
-</body>
-</html>
+    async function setupUserSession(emailStr) {
+        try {
+            const snap = await db.collection("users").where("email", "==", emailStr).get();
+            if (!snap.empty) {
+                const userDoc = snap.docs[0];
+                currentUser = userDoc.data();
+                currentUser.docId = userDoc.id;
+                currentUser.email = emailStr;
+                
+                document.getElementById("login").style.display = "none";
+                document.getElementById("app").style.display = "flex";
+                
+                // ZÁPIS VIZITKY VPRAVO HORE
+                const finalName = currentUser.name || emailStr.split('@')[0];
+                document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${currentUser.role}</span>)`;
+                
+                // OCHRANA ROLÍ - ZOBRAZENIE HR PRIEČINKA
+                if (currentUser.role === "hr" || currentUser.role === "admin") {
+                    document.getElementById("m-hr").style.display = "block";
+                } else {
+                    document.getElementById("m-hr").style.display = "none";
+                }
