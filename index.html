@@ -91,6 +91,8 @@
         <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Dashboard</div>
         <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
         <div id="m-library" class="menu-item" onclick="showSection('library')">Knižnica (Nuclino)</div>
+        <!-- 🔥 NOVÁ SEKCIA VYTIHNUTÁ DO MENU 1. ÚROVNE -->
+        <div id="m-attendance" class="menu-item" onclick="showSection('attendance-section')">Dochádzka (JIRA)</div>
         <div id="m-administration" class="menu-item" onclick="showSection('administration')">Administrácia</div>
         <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR</div>
         <div id="m-others" class="menu-item" onclick="showSection('others')">Iné</div>
@@ -103,21 +105,12 @@
             <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
         </div>
         
-        <!-- DASHBOARD -->
+        <!-- DASHBOARD (OPÄŤ ČISTÝ A PREHĽADNÝ) -->
         <div id="dashboard" class="section-panel" style="display: block;">
             <h2>Dashboard</h2>
             <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px;">
                 <h3 style="color: #38bdf8; margin-top:0;">Vitaj v internom systéme spoločnosti INNO</h3>
                 <p style="color: #94a3b8; margin-bottom:0; line-height: 1.6;">Všetky sekcie firemnej dokumentácie, prístup do znalostnej bázy Nuclino a administrácia zamestnaneckých rolí sú plne pripravené v bočnom navigatívnom paneli.</p>
-            </div>
-
-            <!-- EVIDENCIA DOCHÁDZKY S LINKOM NA JIRA -->
-            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                <div>
-                    <h3 style="color: #38bdf8; margin-top:0;">⏱️ Evidencia dochádzky: JIRA</h3>
-                    <p style="margin-bottom:0; color:#94a3b8;">Nezabudnite si zaznačiť príchod, odchod alebo odpracované hodiny na projektoch.</p>
-                </div>
-                <a href="https://jira.atlassian.com" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,82,204,0.3);">Zaznamenať dochádzku v JIRA ↗</a>
             </div>
         </div>
 
@@ -152,6 +145,19 @@
                     <p style="margin-bottom:0; color:#94a3b8;">Kliknutím na tlačidlo prejdete do externého prostredia zdieľaných znalostí Innovis.</p>
                 </div>
                 <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
+            </div>
+        </div>
+
+        <!-- 🔥 SAMOSTATNÁ PANELOVÁ SEKCIA: DOCHÁDZKA -->
+        <div id="attendance-section" class="section-panel">
+            <h2>Sekcia: Dochádzka (JIRA)</h2>
+            <p style="color:#94a3b8; margin-bottom: 20px;">Evidencia odpracovaného času na projektoch a správa pracovných výkazov.</p>
+            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                <div>
+                    <h3 style="color: #38bdf8; margin-top:0;">⏱️ Evidencia dochádzky v systéme JIRA</h3>
+                    <p style="margin-bottom:0; color:#94a3b8;">Zaznamenajte si príchod, odchod alebo zalogujte hodiny k prideleným úlohám.</p>
+                </div>
+                <a href="https://jira.atlassian.com" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,82,204,0.3);">Zaznamenať dochádzku v JIRA ↗</a>
             </div>
         </div>
         
@@ -461,8 +467,20 @@
         document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active-menu"));
         
         const panel = document.getElementById(id);
-        const menuItem = document.getElementById("m-" + id);
-        if(panel) panel.style.display = "block";
+        if(panel) {
+            panel.style.display = "block";
+        }
+        
+        // Správne nasvietenie aktívnej položky v menu na základe ID sekcie
+        let menuId = "m-dashboard";
+        if (id === "docs") menuId = "m-docs";
+        if (id === "library") menuId = "m-library";
+        if (id === "attendance-section") menuId = "m-attendance";
+        if (id === "administration") menuId = "m-administration";
+        if (id === "hr") menuId = "m-hr";
+        if (id === "others") menuId = "m-others";
+        
+        const menuItem = document.getElementById(menuId);
         if(menuItem) menuItem.classList.add("active-menu");
     }
 
