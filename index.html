@@ -41,7 +41,7 @@
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
-        /* FILE CARD S VNÚTORNOU HISTÓRIA PRE ADMINA */
+        /* FILE CARD S VNÚTORNOU HISTÓRIOU PRE ADMINA */
         .file-card { background: #334155; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
         .file-row-main { display: flex; justify-content: space-between; align-items: center; }
         .file-card a { color: #38bdf8; text-decoration: none; font-weight: bold; }
@@ -146,4 +146,94 @@
         <div id="attendance-section" class="section-panel">
             <h2>Sekcia: Dochádzka (JIRA)</h2>
             <p style="color:#94a3b8; margin-bottom: 20px;">Evidencia odpracovaného času na projektoch a správa pracovných výkazov.</p>
-            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(1
+            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                <div>
+                    <h3 style="color: #38bdf8; margin-top:0;">⏱️ Osobná evidencia dochádzky</h3>
+                    <p style="margin-bottom:0; color:#94a3b8;">Zaznamenajte si odpracované hodiny na vašej osobnej nástenke.</p>
+                </div>
+                <a id="dynamic-jira-link" href="https://innovis.atlassian.net" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,82,204,0.3);">Zaznamenáť dochádzku v JIRA ↗</a>
+            </div>
+        </div>
+        
+        <div id="administration" class="section-panel">
+            <h2>Sekcia: Administrácia</h2>
+            <p>Prehľad registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
+            
+            <div class="admin-form-box">
+                <div style="width: 100%; color: #10b981; font-weight: bold; margin-bottom: 5px; font-size: 0.95em;">➕ Registrácia nového zamestnanca:</div>
+                <input type="text" id="new-user-name" placeholder="Celé meno (napr. Ján Hrach)">
+                <input type="email" id="new-user-email" placeholder="Firemný e-mail">
+                <input type="text" id="new-user-jira" placeholder="Unikátny JIRA odkaz na dochádzku">
+                <select id="new-user-role">
+                    <option value="user">user</option>
+                    <option value="hr">hr</option>
+                    <option value="admin">admin</option>
+                </select>
+                <button onclick="addNewUserDirect()">Vytvoriť užívateľa</button>
+            </div>
+
+            <div id="all-users-list">Načítavam zoznam kolegov...</div>
+        </div>
+        
+        <div id="hr" class="section-panel">
+            <h2>Sekcia: HR a Personálne zložky</h2>
+            <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <p style="margin: 0;">🔒 Prístup povolený zamestnancom s priradenou rolou HR alebo Admin.</p>
+            </div>
+            
+            <div class="doc-category" onclick="toggleAccordion('cat-hr-files')">📁 Úroveň 2: Personálne podklady <span id="arrow-cat-hr-files">▼</span></div>
+            <div id="cat-hr-files" class="subcategory-container">
+                <div class="doc-subcategory">💰 <b>Mzdové podklady</b> <div id="list-hr-mzdy"></div><div id="upload-hr-mzdy"></div></div>
+                <div class="doc-subcategory">📝 <b>Zmluvy a Formuláre</b> <div id="list-hr-zmluvy"></div><div id="upload-hr-zmluvy"></div></div>
+            </div>
+        </div>
+
+        <div id="others" class="section-panel">
+            <h2>Sekcia: Iné</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
+                <p>Ostatné firemné formuláre a pomocné odkazy.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* KONFIGURÁCIA FIREBASE */
+    const firebaseConfig = {
+        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
+        authDomain: "inno-intranet.firebaseapp.com",
+        projectId: "inno-intranet",
+        storageBucket: "inno-intranet.firebasestorage.app",
+        messagingSenderId: "816972324613",
+        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    let currentUser = null;
+    let loggedInUserLogs = [];
+    let loadedDocumentsCache = [];
+    let globalReadingLogsCache = [];
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            setupUserSession(user.email.toLowerCase());
+        } else {
+            document.getElementById("login").style.display = "flex";
+            document.getElementById("app").style.display = "none";
+        }
+    });
+
+    async function login() {
+        const email = document.getElementById("login-email").value.trim().toLowerCase();
+        const password = document.getElementById("login-password").value;
+        if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch(err) { 
+            if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+                const checkSnap = await db.collection("users").where("email", "==", email).get();
+                if
