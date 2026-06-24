@@ -41,7 +41,7 @@
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
-        /* FILE CARD S VNÚTORNOU HISTÓRIOU */
+        /* FILE CARD */
         .file-card { background: #334155; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
         .file-row-main { display: flex; justify-content: space-between; align-items: center; }
         .file-card a { color: #38bdf8; text-decoration: none; font-weight: bold; }
@@ -58,4 +58,530 @@
         /* FORMULÁR PRE NOVÉHO UŽÍVATEĽA */
         .admin-form-box { background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
         .admin-form-box input, .admin-form-box select { background: #0f172a; color: white; border: 1px solid #334155; padding: 10px; border-radius: 6px; outline: none; font-size: 0.9em; flex: 1; min-width: 160px; }
-        .admin-form-box button { background: #10b981; color: white; border: none
+        .admin-form-box button { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .admin-form-box button:hover { background: #059669; }
+
+        /* ZOZNAM UŽÍVATEĽOV */
+        .user-row { background: #1e293b; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #38bdf8; }
+        .user-row .u-email { color: #64748b; font-size: 0.9em; }
+        .role-select { background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; outline: none; }
+        .hidden-file-input { display: none; }
+        .section-panel { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="login" class="login-page">
+    <div class="login-box">
+        <svg class="login-logo-svg" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" font-weight="bold">NOVIS</text>
+        </svg>
+        <input id="login-email" placeholder="Email (meno@inno.sk)">
+        <input id="login-password" type="password" placeholder="Heslo">
+        <button id="login-submit-btn">Login</button>
+    </div>
+</div>
+
+<div id="app">
+    <div class="sidebar">
+        <div style="font-weight: bold; font-size: 1.2em; color: #38bdf8; margin-bottom: 25px; padding-left: 5px;">INNO Intranet</div>
+        
+        <div class="menu-title">Sekcie 1. úrovne</div>
+        <div id="m-dashboard" class="menu-item active-menu" onclick="showSection('dashboard')">Úvod</div>
+        <div id="m-docs" class="menu-item" onclick="showSection('docs')">Dokumenty</div>
+        <div id="m-library" class="menu-item" onclick="showSection('library')">Knižnica (Nuclino)</div>
+        <div id="m-attendance" class="menu-item" onclick="showSection('attendance-section')">Dochádzka (JIRA)</div>
+        <div id="m-administration" class="menu-item" onclick="showSection('administration')">Administrácia</div>
+        <div id="m-hr" class="menu-item" style="display: none;" onclick="showSection('hr')">HR</div>
+        <div id="m-others" class="menu-item" onclick="showSection('others')">Iné</div>
+        
+        <div class="menu-item" onclick="logout()" style="color: #ef4444; margin-top: 40px; border-top: 1px solid #1f2937; padding-top: 15px;">Odhlásiť</div>
+    </div>
+    
+    <div class="main-container">
+        <div class="top-header">
+            <div class="user-badge" id="top-user-badge">Načítavam profil...</div>
+        </div>
+        
+        <div id="dashboard" class="section-panel" style="display: block;">
+            <h2>Úvod</h2>
+            <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px;">
+                <h3 style="color: #38bdf8; margin-top:0;">Vitaj v internom systéme spoločnosti INNO</h3>
+                <p style="color: #94a3b8; margin-bottom:0; line-height: 1.6;">Všetky sekcie firemnej dokumentácie, prístup do znalostnej bázy Nuclino a administrácia zamestnaneckých rolí sú plne pripravené v bočnom navigatívnom paneli.</p>
+            </div>
+        </div>
+
+        <div id="docs" class="section-panel">
+            <h2>Sekcia: Dokumenty</h2>
+            <p style="color:#94a3b8;">Prehľad firemnej dokumentácie druhej úrovne, potvrdzovanie prečítania a správa súborov.</p>
+            
+            <div class="doc-category" onclick="toggleAccordion('cat-iso')">📁 Úroveň 2: ISO <span id="arrow-cat-iso">▼</span></div>
+            <div id="cat-iso" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-iso-politika"></div><div id="upload-iso-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-iso-ciele"></div><div id="upload-iso-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-iso-smernice"></div><div id="upload-iso-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-iso-ine"></div><div id="upload-iso-ine"></div></div>
+            </div>
+
+            <div class="doc-category" onclick="toggleAccordion('cat-isms')">📁 Úroveň 2: ISMS (Bezpečnosť) <span id="arrow-cat-isms">▼</span></div>
+            <div id="cat-isms" class="subcategory-container">
+                <div class="doc-subcategory">🔒 <b>Politika</b> <div id="list-isms-politika"></div><div id="upload-isms-politika"></div></div>
+                <div class="doc-subcategory">🎯 <b>Ciele</b> <div id="list-isms-ciele"></div><div id="upload-isms-ciele"></div></div>
+                <div class="doc-subcategory">📜 <b>Smernice</b> <div id="list-isms-smernice"></div><div id="upload-isms-smernice"></div></div>
+                <div class="doc-subcategory">📎 <b>Iné</b> <div id="list-isms-ine"></div><div id="upload-isms-ine"></div></div>
+            </div>
+        </div>
+
+        <div id="library" class="section-panel">
+            <h2>Sekcia: Knižnica (Nuclino)</h2>
+            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <div>
+                    <h3 style="color: #38bdf8; margin-top:0;">🌐 Firemná encyklopédia NUCLINO</h3>
+                    <p style="margin-bottom:0; color:#94a3b8;">Kliknutím na tlačidlo prejdete do externého prostredia zdieľaných znalostí Innovis.</p>
+                </div>
+                <a href="https://app.nuclino.com/innovis-sk/login" target="_blank" style="background:#2563eb; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">Vstúpiť do Nuclino ↗</a>
+            </div>
+        </div>
+
+        <div id="attendance-section" class="section-panel">
+            <h2>Sekcia: Dochádzka (JIRA)</h2>
+            <p style="color:#94a3b8; margin-bottom: 20px;">Evidencia odpracovaného času na projektoch a správa pracovných výkazov.</p>
+            <div class="dashboard-block" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                <div>
+                    <h3 style="color: #38bdf8; margin-top:0;">⏱️ Osobná evidencia dochádzky</h3>
+                    <p style="margin-bottom:0; color:#94a3b8;">Zaznamenajte si odpracované hodiny na vašej osobnej nástenke.</p>
+                </div>
+                <a id="dynamic-jira-link" href="https://innovis.atlassian.net" target="_blank" style="background:#0052cc; color:white; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,82,204,0.3);">Zaznamenáť dochádzku v JIRA ↗</a>
+            </div>
+        </div>
+        
+        <div id="administration" class="section-panel">
+            <h2>Sekcia: Administrácia</h2>
+            <p>Prehľad registrovaných používateľov a správa ich prístupových rolí v systéme:</p>
+            
+            <div class="admin-form-box">
+                <div style="width: 100%; color: #10b981; font-weight: bold; margin-bottom: 5px; font-size: 0.95em;">➕ Registrácia nového zamestnanca:</div>
+                <input type="text" id="new-user-name" placeholder="Celé meno (napr. Ján Hrach)">
+                <input type="email" id="new-user-email" placeholder="Firemný e-mail">
+                <input type="text" id="new-user-jira" placeholder="Unikátny JIRA odkaz na dochádzku">
+                <select id="new-user-role">
+                    <option value="user">user</option>
+                    <option value="hr">hr</option>
+                    <option value="admin">admin</option>
+                </select>
+                <button onclick="addNewUserDirect()">Vytvoriť užívateľa</button>
+            </div>
+
+            <div id="all-users-list">Načítavam zoznam kolegov...</div>
+        </div>
+        
+        <div id="hr" class="section-panel">
+            <h2>Sekcia: HR a Personálne zložky</h2>
+            <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid #38bdf8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <p style="margin: 0;">🔒 Prístup povolený zamestnancom s priradenou rolou HR alebo Admin.</p>
+            </div>
+            
+            <div class="doc-category" onclick="toggleAccordion('cat-hr-files')">📁 Úroveň 2: Personálne podklady <span id="arrow-cat-hr-files">▼</span></div>
+            <div id="cat-hr-files" class="subcategory-container">
+                <div class="doc-subcategory">💰 <b>Mzdové podklady</b> <div id="list-hr-mzdy"></div><div id="upload-hr-mzdy"></div></div>
+                <div class="doc-subcategory">📝 <b>Zmluvy a Formuláre</b> <div id="list-hr-zmluvy"></div><div id="upload-hr-zmluvy"></div></div>
+            </div>
+        </div>
+
+        <div id="others" class="section-panel">
+            <h2>Sekcia: Iné</h2>
+            <div style="background: #1e293b; padding: 20px; border-radius: 10px;">
+                <p>Ostatné firemné formuláre and pomocné odkazy.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* KONFIGURÁCIA FIREBASE */
+    var firebaseConfig = {
+        apiKey: "AIzaSyBAxjbusE-2s4pVUMS6kCow_8X6u5tX9gE",
+        authDomain: "inno-intranet.firebaseapp.com",
+        projectId: "inno-intranet",
+        storageBucket: "inno-intranet.firebasestorage.app",
+        messagingSenderId: "816972324613",
+        appId: "1:816972324613:web:81429910b0de1e4cbda16c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+    
+    var currentUser = null;
+    var loggedInUserLogs = [];
+    var loadedDocumentsCache = [];
+    var globalReadingLogsCache = [];
+
+    // AUTOMATICKÝ POSLUCHÁČ STAVU PRIHLÁSENIA
+    auth.onAuthStateChanged(function(user) {
+        if (user) {
+            console.log("Používateľ je prihlásený v Auth stave:", user.email);
+            setupUserSession(user.email.toLowerCase());
+        } else {
+            console.log("Žiadny používateľ nie je prihlásený.");
+            document.getElementById("login").style.display = "flex";
+            document.getElementById("app").style.display = "none";
+        }
+    });
+
+    // 🔐 FIXNÉ NAVIAZANIE PRIHLASOVACEJ FUNKCIE CEZ EVENT LISTENER
+    var loginBtn = document.getElementById("login-submit-btn");
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function() {
+            var email = document.getElementById("login-email").value.trim().toLowerCase();
+            var password = document.getElementById("login-password").value;
+            
+            if(!email || !password) { 
+                alert("Prosím, vyplň e-mail aj heslo."); 
+                return; 
+            }
+            
+            console.log("Spúšťam prihlasovanie pre:", email);
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(function(result) {
+                    console.log("Úspešne overené cez Firebase Auth.");
+                })
+                .catch(function(err) {
+                    console.error("Chyba prihlásenia:", err.code, err.message);
+                    
+                    if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+                        db.collection("users").where("email", "==", email).get()
+                            .then(function(checkSnap) {
+                                if (!checkSnap.empty) {
+                                    console.log("Používateľ existuje v DB, ale nemá účet v Auth. Spúšťam auto-aktiváciu...");
+                                    auth.createUserWithEmailAndPassword(email, password)
+                                        .then(function() {
+                                            alert("Vítame vás! Váš účet bol úspešne aktivovaný.");
+                                        })
+                                        .catch(function(createErr) {
+                                            alert("Chyba automatickej aktivácie: " + createErr.message);
+                                        });
+                                } else {
+                                    alert("Tento e-mail nebol nájdený v internej firemnej databáze.");
+                                }
+                            })
+                            .catch(function(dbErr) {
+                                alert("Chyba overenia v databáze: " + dbErr.message);
+                            });
+                    } else {
+                        alert("Chyba prihlásenia: " + err.message);
+                    }
+                });
+        });
+    }
+
+    // 🔒 NAČÍTANIE PROFILU Z FIRESTORE
+    function setupUserSession(emailStr) {
+        console.log("Načítavam firemný profil z Firestore pre:", emailStr);
+        db.collection("users").where("email", "==", emailStr).get()
+            .then(function(snap) {
+                if (!snap.empty) {
+                    var userDoc = snap.docs[0];
+                    currentUser = userDoc.data();
+                    currentUser.docId = userDoc.id;
+                    currentUser.email = emailStr;
+                    
+                    var userRole = (currentUser.role || "user").toLowerCase().trim();
+                    currentUser.role = userRole; 
+
+                    document.getElementById("login").style.display = "none";
+                    document.getElementById("app").style.display = "flex";
+                    
+                    var finalName = currentUser.name || emailStr.split('@')[0];
+                    document.getElementById("top-user-badge").innerHTML = finalName + " (<span>" + userRole + "</span>)";
+                    
+                    // ⏱️ Nastavenie JIRA odkazu
+                    var jiraBtn = document.getElementById("dynamic-jira-link");
+                    if (jiraBtn) {
+                        var targetJiraUrl = currentUser.jiraUrl || "https://innovis.atlassian.net";
+                        if (emailStr === "lia@inno.sk") {
+                            targetJiraUrl = "https://innovis.atlassian.net/jira/dashboards/10562?maximized=11079";
+                        }
+                        jiraBtn.href = targetJiraUrl;
+                    }
+
+                    if (userRole === "hr" || userRole === "admin") {
+                        document.getElementById("m-hr").style.display = "block";
+                    } else {
+                        document.getElementById("m-hr").style.display = "none";
+                    }
+                    
+                    db.collection("logs").where("userEmail", "==", emailStr).get()
+                        .then(function(logSnap) {
+                            loggedInUserLogs = logSnap.docs.map(function(l) { return l.data().docId; });
+                            
+                            applyUploadZones();
+                            loadAllUsers();
+                            
+                            if (userRole === "admin") {
+                                db.collection("logs").onSnapshot(function(logSnapshot) {
+                                    globalReadingLogsCache = [];
+                                    logSnapshot.forEach(function(doc) {
+                                        globalReadingLogsCache.push(doc.data());
+                                    });
+                                    loadDocuments();
+                                });
+                            } else {
+                                loadDocuments();
+                            }
+                        });
+                } else {
+                    alert("E-mail '" + emailStr + "' neexistuje v internej databáze zamestnancov!");
+                    logout();
+                }
+            })
+            .catch(function(e) {
+                alert("Kritická chyba načítania databázy: " + e.message);
+            });
+    }
+
+    function addNewUserDirect() {
+        var nameField = document.getElementById("new-user-name");
+        var emailField = document.getElementById("new-user-email");
+        var jiraField = document.getElementById("new-user-jira");
+        var roleField = document.getElementById("new-user-role");
+
+        var name = nameField.value.trim();
+        var email = emailField.value.trim().toLowerCase();
+        var jiraUrl = jiraField.value.trim();
+        var role = roleField.value;
+
+        if(!name || !email) { alert("Prosím vyplň meno aj firemný e-mail."); return; }
+
+        db.collection("users").where("email", "==", email).get()
+            .then(function(existing) {
+                if(!existing.empty) { alert("Používateľ s týmto e-mailom už v systéme existuje."); return; }
+
+                db.collection("users").add({
+                    name: name,
+                    email: email,
+                    jiraUrl: jiraUrl || "https://innovis.atlassian.net",
+                    role: role
+                }).then(function() {
+                    alert("Používateľ " + name + " bol úspešne vytvorený!");
+                    nameField.value = "";
+                    emailField.value = "";
+                    jiraField.value = "";
+                });
+            })
+            .catch(function(e) { alert("Chyba pri vytvorení: " + e.message); });
+    }
+
+    function loadAllUsers() {
+        db.collection("users").onSnapshot(function(snapshot) {
+            var listContainer = document.getElementById("all-users-list");
+            if (!listContainer) return;
+            listContainer.innerHTML = "";
+            
+            snapshot.forEach(function(doc) {
+                var uData = doc.data();
+                var docId = doc.id;
+                var role = (uData.role || "user").toLowerCase().trim();
+                
+                var rightSideHtml = "";
+                if (currentUser && currentUser.role === "admin") {
+                    rightSideHtml = '<select class="role-select" onchange="changeUserRole(\'' + docId + '\', this.value)">' +
+                        '<option value="user" ' + (role === 'user' ? 'selected' : '') + '>user</option>' +
+                        '<option value="hr" ' + (role === 'hr' ? 'selected' : '') + '>hr</option>' +
+                        '<option value="admin" ' + (role === 'admin' ? 'selected' : '') + '>admin</option>' +
+                        '</select>';
+                } else {
+                    rightSideHtml = '<div style="font-size: 0.85em; color: #38bdf8; font-weight: bold; text-transform: uppercase;">' + role + '</div>';
+                }
+
+                listContainer.innerHTML += '<div class="user-row">' +
+                    '<div><b>👤 ' + (uData.name || "Užívateľ") + '</b> <br><span class="u-email">' + uData.email + '</span></div>' +
+                    '<div>' + rightSideHtml + '</div>' +
+                    '</div>';
+            });
+        });
+    }
+
+    function changeUserRole(userDocId, newRole) {
+        db.collection("users").doc(userDocId).update({ role: newRole })
+            .then(function() { alert("Rola úspešne zmenená."); })
+            .catch(function(e) { alert("Chyba pri zmene roly: " + e.message); });
+    }
+
+    function applyUploadZones() {
+        var categories = [
+            { l1: "iso", l2: "politika" }, { l1: "iso", l2: "ciele" }, { l1: "iso", l2: "smernice" }, { l1: "iso", l2: "ine" },
+            { l1: "isms", l2: "politika" }, { l1: "isms", l2: "ciele" }, { l1: "isms", l2: "smernice" }, { l1: "isms", l2: "ine" },
+            { l1: "hr", l2: "mzdy" }, { l1: "hr", l2: "zmluvy" }
+        ];
+        categories.forEach(function(cat) {
+            var zone = document.getElementById("upload-" + cat.l1 + "-" + cat.l2);
+            if (zone) {
+                var canUpload = (currentUser && currentUser.role === "admin") || (currentUser && currentUser.role === "hr" && cat.l1 === "hr");
+                if (canUpload) {
+                    zone.innerHTML = '<label class="paperclip-btn">📎 Pridať súbor' +
+                        '<input type="file" class="hidden-file-input" onchange="handleFileSelect(this, \'' + cat.l1 + '\', \'' + cat.l2 + '\')">' +
+                        '</label>';
+                } else { zone.innerHTML = ""; }
+            }
+        });
+    }
+
+    function handleFileSelect(inputElement, catL1, catL2) {
+        if (!inputElement.files || inputElement.files.length === 0) return;
+        var selectedFile = inputElement.files[0];
+        var autoFileName = selectedFile.name; 
+        
+        var isDuplicate = loadedDocumentsCache.some(function(doc) {
+            return doc.fileName === autoFileName && doc.categoryL1 === catL1 && doc.categoryL2 === catL2;
+        });
+
+        if (isDuplicate) {
+            alert("Upozornenie: Dokument s názvom \"" + autoFileName + "\" už v tejto sekcii existuje! Nahrávanie bolo prerušené.");
+            inputElement.value = "";
+            return;
+        }
+        
+        var fallbackUrl = "https://www.google.com/search?q=" + encodeURIComponent(autoFileName);
+        db.collection("documents").add({
+            fileName: autoFileName,
+            fileUrl: fallbackUrl,
+            categoryL1: catL1,
+            categoryL2: catL2,
+            uploadedBy: currentUser.email
+        }).then(function() {
+            inputElement.value = "";
+        }).catch(function(e) { 
+            alert("Chyba nahrávania: " + e.message); 
+        });
+    }
+
+    function loadDocuments() {
+        db.collection("documents").onSnapshot(function(snapshot) {
+            var lists = [
+                "iso-politika", "iso-ciele", "iso-smernice", "iso-ine",
+                "isms-politika", "isms-ciele", "isms-smernice", "isms-ine",
+                "hr-mzdy", "hr-zmluvy"
+            ];
+            lists.forEach(function(id) {
+                var el = document.getElementById("list-" + id);
+                if(el) el.innerHTML = "";
+            });
+
+            loadedDocumentsCache = [];
+
+            snapshot.forEach(function(doc) {
+                var data = doc.data();
+                var id = doc.id;
+                if (!data.fileName) return;
+
+                loadedDocumentsCache.push({
+                    fileName: data.fileName,
+                    categoryL1: data.categoryL1,
+                    categoryL2: data.categoryL2
+                });
+
+                var targetElement = document.getElementById("list-" + data.categoryL1 + "-" + data.categoryL2);
+                if (targetElement) {
+                    var hasRead = loggedInUserLogs.includes(id);
+                    var actionHtml = hasRead 
+                        ? '<span class="confirmed-status">✓ Prečítané</span>'
+                        : '<button class="confirm-btn" onclick="confirmRead(\'' + id + '\', \'' + data.fileName + '\')">👁 Potvrdiť prečítanie</button>';
+                    
+                    var canDelete = (currentUser && currentUser.role === 'admin') || (currentUser && currentUser.role === 'hr' && data.categoryL1 === 'hr');
+                    var deleteHtml = canDelete 
+                        ? '<button onclick="deleteDoc(\'' + id + '\')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:4px; margin-left:5px; cursor:pointer;">✕</button>' 
+                        : '';
+
+                    var inlineLogsHtml = "";
+                    if (currentUser && currentUser.role === "admin") {
+                        var matchingLogs = globalReadingLogsCache.filter(function(log) { return log.docId === id; });
+                        
+                        if (matchingLogs.length > 0) {
+                            inlineLogsHtml = '<div class="doc-admin-logs"><span class="doc-admin-logs-title">👁️ Potvrdili prečítanie:</span>';
+                            matchingLogs.forEach(function(log) {
+                                inlineLogsHtml += '<div class="log-item">' +
+                                    '<span>👤 <b>' + log.userName + '</b> (' + log.userEmail + ')</span>' +
+                                    '<span style="color:#10b981;">⏰ ' + log.timestamp + '</span>' +
+                                    '</div>';
+                            });
+                            inlineLogsHtml += '</div>';
+                        } else {
+                            inlineLogsHtml = '<div class="doc-admin-logs" style="border-left: 3px solid #64748b; color:#64748b;">Zatiaľ nikto nepotvrdil prečítanie.</div>';
+                        }
+                    }
+
+                    targetElement.innerHTML += '<div class="file-card">' +
+                        '<div class="file-row-main">' +
+                        '<a href="' + data.fileUrl + '" target="_blank">📄 ' + data.fileName + '</a>' +
+                        '<div>' + actionHtml + deleteHtml + '</div>' +
+                        '</div>' +
+                        inlineLogsHtml +
+                        '</div>';
+                }
+            });
+        });
+    }
+
+    function confirmRead(docId, docName) {
+        if (!currentUser) return;
+        if (!confirm("Rozumiem a potvrdzujem prečítanie dokumentu: " + docName)) return;
+        
+        db.collection("logs").add({
+            docId: docId,
+            docName: docName,
+            userEmail: currentUser.email,
+            userName: currentUser.name || currentUser.email,
+            timestamp: new Date().toLocaleString("sk-SK"),
+            type: "Prečítané a Porozumené"
+        }).then(function() {
+            alert("Potvrdené!");
+            setupUserSession(currentUser.email);
+        }).catch(function(e) { 
+            alert(e.message); 
+        });
+    }
+
+    function deleteDoc(id) {
+        if(!confirm("Naozaj vymazať tento dokument?")) return;
+        db.collection("documents").doc(id).delete().catch(function(e) {});
+    }
+
+    function showSection(id) {
+        document.querySelectorAll(".section-panel").forEach(function(s) { s.style.display = "none"; });
+        document.querySelectorAll(".menu-item").forEach(function(m) { m.classList.remove("active-menu"); });
+        
+        var panel = document.getElementById(id);
+        if(panel) { panel.style.display = "block"; }
+        
+        var menuId = "m-dashboard";
+        if (id === "docs") menuId = "m-docs";
+        if (id === "library") menuId = "m-library";
+        if (id === "attendance-section") menuId = "m-attendance";
+        if (id === "administration") menuId = "m-administration";
+        if (id === "hr") menuId = "m-hr";
+        if (id === "others") menuId = "m-others";
+        
+        var menuItem = document.getElementById(menuId);
+        if(menuItem) menuItem.classList.add("active-menu");
+    }
+
+    function toggleAccordion(id) {
+        var container = document.getElementById(id);
+        var arrow = document.getElementById("arrow-" + id);
+        if(!container) return;
+        var isVisible = container.style.display === "block";
+        container.style.display = isVisible ? "none" : "block";
+        if (arrow) arrow.innerText = isVisible ? "▼" : "▲";
+    }
+
+    function logout() { 
+        auth.signOut().then(function() { 
+            currentUser = null; 
+            location.reload(); 
+        }); 
+    }
+</script>
+</body>
+</html>
