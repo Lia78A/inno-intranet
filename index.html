@@ -41,7 +41,7 @@
         .subcategory-container { display: none; padding-left: 15px; margin-bottom: 15px; }
         .doc-subcategory { background: #1f2937; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #2563eb; }
         
-        /* FILE CARD S VNÚTORNOU HISTÓRIOU PRE ADMINA */
+        /* FILE CARD */
         .file-card { background: #334155; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
         .file-row-main { display: flex; justify-content: space-between; align-items: center; }
         .file-card a { color: #38bdf8; text-decoration: none; font-weight: bold; }
@@ -107,7 +107,7 @@
             <h2>Úvod</h2>
             <div style="background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px;">
                 <h3 style="color: #38bdf8; margin-top:0;">Vitaj v internom systéme spoločnosti INNO</h3>
-                <p style="color: #94a3b8; margin-bottom:0; line-height: 1.6;">Všetky sekcie firemnej dokumentácie, prístup do znalostnej bázy Nuclino a administrácia zamestnaneckých rolí sú plne pripravené v bočnom navigatívnom paneli.</p>
+                <p style="color: #94a3b8; margin-bottom:0; line-height: 1.6;">Všetky sekcie firemnej dokumentácie, prístup do znalostnej bázy Nuclino and administrácia zamestnaneckých rolí sú plne pripravené v bočnom navigatívnom paneli.</p>
             </div>
         </div>
 
@@ -230,10 +230,73 @@
         const email = document.getElementById("login-email").value.trim().toLowerCase();
         const password = document.getElementById("login-password").value;
         if(!email || !password) { alert("Prosím, vyplň e-mail aj heslo."); return; }
-        
         try {
             await auth.signInWithEmailAndPassword(email, password);
         } catch(err) { 
             if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
                 const checkSnap = await db.collection("users").where("email", "==", email).get();
-                if
+                if (!checkSnap.empty) {
+                    try {
+                        await auth.createUserWithEmailAndPassword(email, password);
+                        alert("Vítame vás! Váš účet bol úspešne aktivovaný.");
+                        return;
+                    } catch(createErr) { alert("Chyba aktivácie: " + createErr.message); return; }
+                }
+            }
+            alert("Chyba prihlásenia (Auth): " + err.message); 
+        }
+    }
+
+    async function setupUserSession(emailStr) {
+        try {
+            const snap = await db.collection("users").where("email", "==", emailStr).get();
+            if (!snap.empty) {
+                const userDoc = snap.docs[0];
+                currentUser = userDoc.data();
+                currentUser.docId = userDoc.id;
+                currentUser.email = emailStr;
+                
+                const userRole = (currentUser.role || "user").toLowerCase().trim();
+                currentUser.role = userRole; 
+
+                document.getElementById("login").style.display = "none";
+                document.getElementById("app").style.display = "flex";
+                
+                const finalName = currentUser.name || emailStr.split('@')[0];
+                document.getElementById("top-user-badge").innerHTML = `${finalName} (<span>${userRole}</span>)`;
+                
+                // 🔐 STOPERCENSTNE POISTENÝ LINK PRE LIA@INNO.SK
+                const jiraBtn = document.getElementById("dynamic-jira-link");
+                if (jiraBtn) {
+                    let targetJiraUrl = currentUser.jiraUrl || "https://innovis.atlassian.net";
+                    if (emailStr === "lia@inno.sk") {
+                        targetJiraUrl = "https://innovis.atlassian.net/jira/dashboards/10562?maximized=11079";
+                    }
+                    jiraBtn.href = targetJiraUrl;
+                }
+
+                if (userRole === "hr" || userRole === "admin") {
+                    document.getElementById("m-hr").style.display = "block";
+                } else {
+                    document.getElementById("m-hr").style.display = "none";
+                }
+                
+                const logSnap = await db.collection("logs").where("userEmail", "==", emailStr).get();
+                loggedInUserLogs = logSnap.docs.map(l => l.data().docId);
+
+                applyUploadZones();
+                loadAllUsers();
+                
+                if (userRole === "admin") {
+                    db.collection("logs").onSnapshot((logSnapshot) => {
+                        globalReadingLogsCache = [];
+                        logSnapshot.forEach(doc => {
+                            globalReadingLogsCache.push(doc.data());
+                        });
+                        loadDocuments();
+                    });
+                } else {
+                    loadDocuments();
+                }
+            } else {
+                alert("Email '" + emailStr +
